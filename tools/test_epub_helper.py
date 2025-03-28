@@ -142,7 +142,7 @@ def sample_epub_with_meta(tmp_path):
     return epub_path
 
 def test_get_meta_success(sample_epub_with_meta):
-    """测试成功获取元数据"""
+    """Test successful metadata extraction"""
     meta = get_meta(sample_epub_with_meta)
     
     assert isinstance(meta, dict)
@@ -202,15 +202,15 @@ def test_get_meta_minimal_epub(tmp_path):
     assert 'creator' not in meta   # Creator field should not exist if not set
 
 def test_get_meta_file_not_found():
-    """测试文件不存在的情况"""
+    """Test case when file does not exist"""
     with pytest.raises(FileNotFoundError):
         get_meta('/nonexistent/path/book.epub')
 
 def test_get_meta_invalid_file(tmp_path):
-    """测试无效EPUB文件"""
+    """Test invalid EPUB file"""
     invalid_path = os.path.join(tmp_path, 'not_an_epub.txt')
     with open(invalid_path, 'w') as f:
         f.write('This is not an EPUB file')
     
-    with pytest.raises(Exception, match="解析EPUB文件失败"):
+    with pytest.raises(Exception, match="Failed to parse EPUB file"):
         get_meta(invalid_path)
