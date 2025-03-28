@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+*.log
+*__pycache__
+uv.lock
+
 # Distribution / packaging
 .Python
 build/
