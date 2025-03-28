@@ -65,7 +65,7 @@ You can visit http://localhost:5173/ for testing & debuging purpose
 
 ### Starting the MCP Server in Prod mode
 
-Run the server in development mode:
+Run the server:
 ```bash
 uv run main.py
 ```
