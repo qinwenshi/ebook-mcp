@@ -3,7 +3,7 @@ import logging
 def setup_logger():
     """Configure global logger"""
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler('main.log', encoding='utf-8'),

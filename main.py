@@ -57,7 +57,7 @@ def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
         FileNotFoundError: Raises when the epub file not found
         Exception: Raisers when running into parsing error of epub file
     """
-    logger.info(f"Getting ebook table of contents: {epub_path}")
+    logger.info(f"calling get_epub_toc: {epub_path}")
     try:
         return epub_helper.get_toc(epub_path)
     except FileNotFoundError as e:
@@ -73,7 +73,7 @@ def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
         epub_path: Full path to the ebook file.eg. "/Users/macbook/Downloads/test.epub"
         chapter_id: Chapter id of the chapter to get content
     """
-    logger.info(f"Getting chapter content: {epub_path}, chapter ID: {chapter_id}")
+    logger.info(f"calling get_epub_chapter_markdown: {epub_path}, chapter ID: {chapter_id}")
     try:
         book = epub_helper.read_epub(epub_path)
         return epub_helper.extract_chapter_markdown(book, chapter_id)
@@ -103,7 +103,7 @@ def get_pdf_metadata(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         FileNotFoundError: Raises when the PDF file not found
         Exception: Raisers when running into parsing error of PDF file
     """
-    logger.info(f"Getting PDF metadata: {pdf_path}")
+    logger.info(f"calling get_pdf_metadata: {pdf_path}")
     try:
         return pdf_helper.get_meta(pdf_path)
     except FileNotFoundError as e:
@@ -125,7 +125,7 @@ def get_pdf_toc(pdf_path: str) -> List[Tuple[str, int]]:
         FileNotFoundError: Raises when the PDF file not found
         Exception: Raisers when running into parsing error of PDF file
     """
-    logger.info(f"Getting PDF table of contents: {pdf_path}")
+    logger.info(f"calling get_pdf_toc: {pdf_path}")
     try:
         return pdf_helper.get_toc(pdf_path)
     except FileNotFoundError as e:
@@ -144,7 +144,7 @@ def get_pdf_page_text(pdf_path: str, page_number: int) -> str:
     Returns:
         str: Extracted text content
     """
-    logger.info(f"Getting PDF page content: {pdf_path}, page: {page_number}")
+    logger.info(f"calling get_pdf_page_text: {pdf_path}, page: {page_number}")
     try:
         return pdf_helper.extract_page_text(pdf_path, page_number)
     except Exception as e:
@@ -161,7 +161,7 @@ def get_pdf_page_markdown(pdf_path: str, page_number: int) -> str:
     Returns:
         str: Markdown formatted text
     """
-    logger.info(f"Getting PDF page markdown: {pdf_path}, page: {page_number}")
+    logger.info(f"calling get_pdf_page_markdown: {pdf_path}, page: {page_number}")
     try:
         return pdf_helper.extract_page_markdown(pdf_path, page_number)
     except Exception as e:
@@ -178,11 +178,13 @@ def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, Lis
     Returns:
         Tuple[str, List[int]]: Tuple containing (chapter_content, page_numbers)
     """
-    logger.info(f"Getting PDF chapter content: {pdf_path}, chapter: {chapter_title}")
+    logger.info(f"calling get_pdf_chapter_content: {pdf_path}, chapter: {chapter_title}")
     try:
         return pdf_helper.extract_chapter_by_title(pdf_path, chapter_title)
     except Exception as e:
         raise Exception(str(e))
+
+
 
 if __name__ == "__main__":
     # Initialize and run the server

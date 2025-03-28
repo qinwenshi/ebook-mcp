@@ -6,6 +6,7 @@ html2text>=2020.1.16
 pydantic>=2.0.0
 fastmcp>=0.1.0
 
+
 # HTML parsing and cleaning (for extracting paragraphs and injecting translations)
 beautifulsoup4>=4.12.0
 
