@@ -6,9 +6,8 @@ from pydantic import BaseModel
 from bs4 import BeautifulSoup
 from tools import epub_helper, pdf_helper
 import logging
-from tools.logger_config import setup_logger  # 导入日志配置
+from tools.logger_config import setup_logger  # Import logger config
 
-# 获取日志记录器
 logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
@@ -22,7 +21,7 @@ def get_all_epub_files(path: str) -> List[str]:
     return epub_helper.get_all_epub_files(path)
 
 @mcp.tool()
-def get_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
+def get_epub_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
     """Get metadata of a given ebook.
 
     Args:
@@ -45,7 +44,7 @@ def get_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
 
 
 @mcp.tool()
-def get_toc(epub_path: str) -> List[Tuple[str, str]]:
+def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
     """Get toc of a given ebook.
 
     Args:
@@ -67,7 +66,7 @@ def get_toc(epub_path: str) -> List[Tuple[str, str]]:
         raise Exception(str(e))
 
 @mcp.tool()
-def get_chapter_markdown(epub_path:str, chapter_id: str) -> str:
+def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
     """Get content of a given chapter of a given ebook.
 
     Args:

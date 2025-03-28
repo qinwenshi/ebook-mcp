@@ -33,11 +33,36 @@ uv pip install -r requirements.txt
 
 ## Usage
 
-### Starting the MCP Server
+### Starting the MCP Server in development mode
 
 Run the server in development mode:
 ```bash
 uv run mcp dev main.py
+```
+You can visit http://localhost:5173/ for testing & debuging purpose
+
+### Starting the MCP Server in Prod mode
+
+Run the server in development mode:
+```bash
+uv run main.py
+```
+
+
+#### Config the MCP in Cursor
+
+Add the following configuration in Cursoe
+```bash
+
+"ebook-mcp":{
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/onebird/github/ebook-mcp",
+                "run",
+                "main.py"
+            ]
+        }
 ```
 
 ### EPUB Processing Examples
@@ -154,17 +179,12 @@ Key dependencies include:
            └────────────────────────────┘
 ```
 
-## License
 
-[MIT License](LICENSE)
 
 ## Contributing
 
 We welcome Issues and Pull Requests!
 
-## Author
-
-[Your Name]
 
 ## Changelog
 
