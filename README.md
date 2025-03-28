@@ -1,6 +1,28 @@
 # Ebook-MCP
 
+English | [中文](README-CN.md)
+
 Ebook-MCP is a powerful Model Context Protocol (MCP) server for processing electronic books. Built on the [Model Context Protocol](https://github.com/modelcontextprotocol), it provides a set of standardized APIs for seamless integration between LLM applications and e-book processing capabilities. Currently supports EPUB and PDF formats.
+
+## Use Cases & Value
+
+Ebook-MCP transforms how you interact with your digital books by enabling natural language conversations with your reading materials. It seamlessly integrates with modern AI-powered IDEs like Cursor and Claude, allowing you to:
+
+- **Smart Library Management**: Simply ask "Show me all EPUB files in my downloads folder" or "Find books about GenAI in my library"
+- **Interactive Reading Experience**: Have natural conversations about your books:
+  - "Give me a brief introduction to 'LLM Engineer Handbook'"
+  - "What's covered in Chapter 3?"
+  - "Summarize the key points about RAG from this book"
+- **Active Learning Support**: Enhance your learning through AI-powered interactions:
+  - "Create a quiz based on the RAG concepts from Chapter 5"
+  - "Explain the differences between the architectures discussed in this chapter"
+  - "Give me practical exercises based on the concepts in this section"
+- **Content Navigation**: Easily navigate through your books with natural language queries:
+  - "Find all sections discussing prompt engineering"
+  - "Show me the chapters about fine-tuning"
+  - "Take me to the part about vector databases"
+
+By bridging the gap between traditional e-books and AI capabilities, Ebook-MCP helps readers extract more value from their digital library through intuitive, conversation-based interactions.
 
 ## Features
 

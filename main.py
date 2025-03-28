@@ -184,8 +184,6 @@ def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, Lis
     except Exception as e:
         raise Exception(str(e))
 
-
-
 if __name__ == "__main__":
     # Initialize and run the server
     logger.info("Server is starting.....")
