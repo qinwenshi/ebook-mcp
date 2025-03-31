@@ -2,6 +2,9 @@
 
 [English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | 中文
 
+<img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
+
+
 Ebook-MCP 是一个功能强大的电子书处理 Model Context Protocol (MCP) 服务器。基于 [Model Context Protocol](https://github.com/modelcontextprotocol) 构建，它提供了一套标准化的 API，可以无缝集成 LLM 应用程序和电子书处理功能。目前支持 EPUB 和 PDF 格式。
 
 ## 使用场景和价值
