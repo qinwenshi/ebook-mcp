@@ -49,7 +49,7 @@ class MCPClient:
         
         self.conversation_history = []
         self.model = "deepseek-chat"  # Using Deepseek Chat model
-        self.max_tokens = 8192  # Deepseek V3 context window
+        self.max_tokens = 8192  # Deepseek context window
         self.logger = setup_logging()
 
     def count_tokens(self, messages):
@@ -121,20 +121,54 @@ class MCPClient:
         } for tool in response.tools]
 
         final_text = []
+        current_tool_call_id = None  # Track current tool call ID
+        
         while True:
-            self.logger.debug(f"Sending request to Deepseek with {len(self.conversation_history)} messages in history")
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=self.conversation_history,
-                tools=available_tools,
-                tool_choice="auto"
-            )
+            # Ensure all message contents are strings
+            messages_for_api = []
+            for msg in self.conversation_history:
+                api_msg = {"role": msg["role"]}
+                
+                # Convert content to string if it exists
+                if "content" in msg:
+                    api_msg["content"] = str(msg["content"]) if msg["content"] is not None else ""
+                else:
+                    api_msg["content"] = ""
+                
+                # Handle tool calls if they exist
+                if msg.get("tool_calls"):
+                    api_msg["tool_calls"] = msg["tool_calls"]
+                    if msg["tool_calls"]:
+                        current_tool_call_id = msg["tool_calls"][0]["id"]
+                
+                # Add tool_call_id for tool messages
+                if msg["role"] == "tool" and current_tool_call_id:
+                    api_msg["tool_call_id"] = current_tool_call_id
+                
+                messages_for_api.append(api_msg)
+
+            self.logger.debug(f"Sending request to Deepseek with {len(messages_for_api)} messages in history")
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages_for_api,
+                    tools=available_tools,
+                    tool_choice="auto"
+                )
+            except Exception as e:
+                self.logger.error(f"API request failed: {str(e)}")
+                self.logger.debug(f"Messages sent: {json.dumps(messages_for_api, indent=2)}")
+                raise
 
             message = response.choices[0].message
             assistant_message = {
                 "role": "assistant",
-                "content": message.content,
-                "tool_calls": [
+                "content": str(message.content) if message.content is not None else ""
+            }
+            
+            # Only add tool_calls if they exist
+            if message.tool_calls:
+                assistant_message["tool_calls"] = [
                     {
                         "id": tool_call.id,
                         "type": "function",
@@ -142,9 +176,10 @@ class MCPClient:
                             "name": tool_call.function.name,
                             "arguments": tool_call.function.arguments
                         }
-                    } for tool_call in (message.tool_calls or [])
-                ] if message.tool_calls else None
-            }
+                    } for tool_call in message.tool_calls
+                ]
+                current_tool_call_id = message.tool_calls[0].id
+            
             self.conversation_history.append(assistant_message)
             self.logger.debug(f"Added assistant message to history: {message.content}")
             final_text.append(message.content or "")
@@ -164,10 +199,11 @@ class MCPClient:
                 
                 final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
 
+                # Add tool response to conversation history with tool_call_id
                 tool_message = {
                     "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": result.content
+                    "content": str(result.content),
+                    "tool_call_id": tool_call.id  # Use current tool call ID
                 }
                 self.conversation_history.append(tool_message)
                 self.logger.debug("Added tool result to history")
