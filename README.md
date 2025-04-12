@@ -28,7 +28,7 @@ Ebook-MCP transforms how you interact with your digital books by enabling natura
 By bridging the gap between traditional e-books and AI capabilities, Ebook-MCP helps readers extract more value from their digital library through intuitive, conversation-based interactions.
 
 Quick demo - Run with Deep Seek (Please check all the example's with Claude/OpenAI under mcp-client-example folder) 
-'''
+```
 Query:Please check all the epub books in my download folder. user id is onebird.
 ......
 
@@ -117,10 +117,7 @@ Neuralink: He aims to use brain-machine interfaces to merge humans with AI — t
 Contradictions:
 While warning about AI risks, Musk is simultaneously pushing for Full Self-Driving (FSD) technology at Tesla and has founded xAI to research Artificial General Intelligence (AGI).
 
-
-
-
-'''
+```
 
 ## Features
 
