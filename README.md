@@ -34,9 +34,8 @@ Query:Please check all the epub books in my download folder. user id is onebird.
 
 Query: Can you ask me a few questions to test my understanding of this book?
 
-2025-04-12 15:29:12,313 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
 
-Sure! Here are 5 questions about Elon Musk by Walter Isaacson to test your understanding of the book. Please answer based on your knowledge — I’ll give feedback and add details after each response.
+Answer: Sure! Here are 5 questions about Elon Musk by Walter Isaacson to test your understanding of the book. Please answer based on your knowledge — I’ll give feedback and add details after each response.
 
 Question 1:
 How did Musk’s childhood and family background shape his personality and career later in life?
@@ -68,7 +67,7 @@ Question 3: He secured a contract with NASA. Tesla solved its production problem
 Question 4: I don’t know. Please answer for me.
 Question 5: He believes open-source technology is necessary to ensure AI is safe and open.
 
-Your answers have captured some key points from the book. Let me add details, correct some inaccuracies, and provide further background for Questions 4 and 5:
+Answer: Your answers have captured some key points from the book. Let me add details, correct some inaccuracies, and provide further background for Questions 4 and 5:
 
 Question 1 — Correction & Supplement
 Influence of His Father:
