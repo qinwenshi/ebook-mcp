@@ -25,8 +25,9 @@ dev = [
     "uv"
 ]
 
+
 [project.scripts]
-ebook-mcp = "ebook-mcp.main:cli_entry"
+ebook-mcp = "ebook_mcp.main:cli_entry"
 
 [build-system]
 requires = ["hatchling"]
