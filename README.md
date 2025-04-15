@@ -316,8 +316,9 @@ We welcome Issues and Pull Requests!
 
 ## Changelog
 
-### v1.0.0
+### v1.0.3
 - Initial release
 - EPUB and PDF format support
 - Basic file processing APIs
-- MCP Client examples - Claude, DeepSeek, OpenAI, 
+- MCP Client examples - Claude, DeepSeek, OpenAI
+- Support to run the server from PyPI
