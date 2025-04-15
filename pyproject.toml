@@ -26,6 +26,7 @@ dev = [
 ]
 
 
+
 [project.scripts]
 ebook-mcp = "ebook_mcp.main:cli_entry"
 
