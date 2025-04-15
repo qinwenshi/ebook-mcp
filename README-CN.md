@@ -190,7 +190,7 @@ uv pip install -r requirements.txt
 
 运行开发模式服务器：
 ```bash
-uv run mcp dev main.py
+uv run mcp dev src/ebook_mcp/main.py
 ```
 您可以访问 http://localhost:5173/ 进行测试和调试
 
@@ -209,9 +209,18 @@ uv run main.py
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/onebird/github/ebook-mcp",
+                "/Users/onebird/github/ebook-mcp/src/ebook_mcp/",
                 "run",
                 "main.py"
+            ]
+        }
+```
+
+``` 你也可以使用这个，下载 PyPI的最新版
+"ebook-mcp":{
+            "command": "uvx",
+            "args": [
+                "ebook-mcp"
             ]
         }
 ```

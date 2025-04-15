@@ -4,10 +4,10 @@ from mcp.server.fastmcp import FastMCP
 from ebooklib import epub
 from pydantic import BaseModel
 from bs4 import BeautifulSoup
-from tools import epub_helper, pdf_helper
+from ebook_mcp.tools import epub_helper, pdf_helper
 import logging
 from datetime import datetime
-from tools.logger_config import setup_logger  # Import logger config
+from ebook_mcp.tools.logger_config import setup_logger  # Import logger config
 
 
 log_dir = "logs"

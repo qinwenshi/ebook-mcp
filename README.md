@@ -156,7 +156,7 @@ uv pip install -r requirements.txt
 
 Run the server in development mode:
 ```bash
-uv run mcp dev main.py
+uv run mcp dev src/ebook_mcp/main.py
 ```
 You can visit http://localhost:5173/ for testing & debuging purpose
 
@@ -164,7 +164,7 @@ You can visit http://localhost:5173/ for testing & debuging purpose
 
 Run the server:
 ```bash
-uv run main.py
+uv run src/ebook_mcp/main.py
 ```
 
 
@@ -172,17 +172,26 @@ uv run main.py
 
 Add the following configuration in Cursoe
 ```bash
-
 "ebook-mcp":{
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/onebird/github/ebook-mcp",
+                "/Users/onebird/github/ebook-mcp/src/ebook_mcp/",
                 "run",
                 "main.py"
             ]
         }
 ```
+
+``` You can also use the package from PyPI
+"ebook-mcp":{
+            "command": "uvx",
+            "args": [
+                "ebook-mcp"
+            ]
+        }
+```
+
 
 ### EPUB Processing Examples
 
