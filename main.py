@@ -206,3 +206,9 @@ if __name__ == "__main__":
     # Initialize and run the server
     logger.info("Server is starting.....")
     mcp.run(transport='stdio')
+
+# as the cli entry after the "pip install ebook-mcp"
+def cli_entry():
+    import logging
+    logger.info("CLI launched: Starting ebook-MCP...")
+    mcp.run(transport="stdio")
