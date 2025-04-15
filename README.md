@@ -316,7 +316,7 @@ We welcome Issues and Pull Requests!
 
 ## Changelog
 
-### v1.0.3
+### v1.0.5
 - Initial release
 - EPUB and PDF format support
 - Basic file processing APIs

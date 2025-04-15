@@ -345,8 +345,9 @@ chapter_content, page_numbers = get_pdf_chapter_content("/path/to/book.pdf", "Ch
 
 ## 更新日志
 
-### v1.0.0
+### v1.0.5
 - 初始发布
 - 支持 EPUB 和 PDF 格式
 - 基础文件处理 API
 - MCP Client的例子（Claude，DeepSeek，OpenAI）
+- 支持从PyPI下载运行
