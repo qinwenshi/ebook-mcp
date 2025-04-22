@@ -183,14 +183,7 @@ Add the following configuration in Cursoe
         }
 ```
 
-``` You can also use the package from PyPI
-"ebook-mcp":{
-            "command": "uvx",
-            "args": [
-                "ebook-mcp"
-            ]
-        }
-```
+
 
 
 ### EPUB Processing Examples
