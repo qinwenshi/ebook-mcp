@@ -216,14 +216,7 @@ uv run main.py
         }
 ```
 
-``` 你也可以使用这个，下载 PyPI的最新版
-"ebook-mcp":{
-            "command": "uvx",
-            "args": [
-                "ebook-mcp"
-            ]
-        }
-```
+
 
 ### EPUB 处理示例
 
