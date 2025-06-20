@@ -16,11 +16,11 @@ if not os.path.exists(log_dir):
 
 log_file = os.path.join(log_dir, f"ebook-mcp_server_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(log_file),
-        #logging.StreamHandler()
+        logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
@@ -198,7 +198,7 @@ def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, Lis
     """
     logger.debug(f"calling get_pdf_chapter_content: {pdf_path}, chapter: {chapter_title}")
     try:
-        return pdf_helper.extract_chapter_by_title(pdf_path, chapter_title)
+        return pdf_helper.get_chapter_content(pdf_path, chapter_title)
     except Exception as e:
         raise Exception(str(e))
 

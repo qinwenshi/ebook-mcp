@@ -192,7 +192,11 @@ uv pip install -r requirements.txt
 ```bash
 uv run mcp dev src/ebook_mcp/main.py
 ```
-您可以访问 http://localhost:5173/ 进行测试和调试
+您可以访问 http://localhost:5173/ 进行测试和调试.你也可以为测试安装 Inspector 工具。
+```
+npx @modelcontextprotocol/inspector uv --directory . run src/ebook_mcp/main.py
+```
+
 
 ### 在生产模式下启动 MCP 服务器
 

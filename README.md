@@ -160,7 +160,12 @@ Run the server in development mode:
 ```bash
 uv run mcp dev src/ebook_mcp/main.py
 ```
-You can visit http://localhost:5173/ for testing & debuging purpose
+
+You can visit http://localhost:5173/ for testing & debuging purpose 
+You can also install the inspector for the test.
+```
+npx @modelcontextprotocol/inspector uv --directory . run src/ebook_mcp/main.py
+```
 
 ### Starting the MCP Server in Prod mode
 

@@ -33,17 +33,17 @@ The project provides three client examples, each corresponding to a different AI
 
 ### OpenAI GPT-4 Client
 ```bash
-python openai_example.py path/to/ebook-mcp_project/main.py
+python openai_example.py ../main.py
 ```
 
 ### Anthropic Claude Client
 ```bash
-python anthropic_example.py path/to/ebook-mcp_project/main.py
+python anthropic_example.py ../main.py
 ```
 
 ### Deepseek AI Client
 ```bash
-python deepseek_example.py path/to/ebook-mcp_project/main.py
+python deepseek_example.py ../main.py
 ```
 
 ## Example Conversation
@@ -54,7 +54,6 @@ Here's an example of interacting with an ebook using the MCP client with DeepSee
 
 Query: Can you ask me a few questions to test my understanding of this book?
 
-2025-04-12 15:29:12,313 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
 
 Sure! Here are 5 questions about Elon Musk by Walter Isaacson to test your understanding of the book. Please answer based on your knowledge — I’ll give feedback and add details after each response.
 

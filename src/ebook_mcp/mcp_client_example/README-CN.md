@@ -30,17 +30,17 @@ DEEPSEEK_API_KEY=your_deepseek_api_key
 
 ### OpenAI GPT-4 客户端
 ```bash
-python openai_example.py path/to/ebook-mcp_project/main.py
+python openai_example.py ../main.py
 ```
 
 ### Anthropic Claude 客户端
 ```bash
-python anthropic_example.py path/to/ebook-mcp_project/main.py
+python anthropic_example.py ../main.py
 ```
 
 ### Deepseek AI 客户端
 ```bash
-python deepseek_example.py path/to/ebook-mcp_project/main.py
+python deepseek_example.py ../main.py
 ```
 
 ## 对话示例
