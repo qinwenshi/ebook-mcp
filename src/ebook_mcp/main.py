@@ -100,6 +100,32 @@ def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
     except Exception as e:
         raise Exception(str(e))
 
+@mcp.tool()
+def get_epub_chapter_markdown_fixed(epub_path:str, chapter_id: str) -> str:
+    """Get content of a given chapter using the fixed extraction method.
+    
+    This function uses extract_chapter_html_fixed which properly handles subchapters
+    and provides accurate chapter boundaries, fixing the issue where subchapters
+    in the TOC cause premature truncation of chapter content.
+
+    Args:
+        epub_path: Full path to the ebook file. eg. "/Users/macbook/Downloads/test.epub"
+        chapter_id: Chapter id of the chapter to get content (e.g., "chapter1.xhtml#section1_3")
+    
+    Returns:
+        str: Chapter content in markdown format
+    """
+    logger.debug(f"calling get_epub_chapter_markdown_fixed: {epub_path}, chapter ID: {chapter_id}")
+    try:
+        book = epub_helper.read_epub(epub_path)
+        
+        # Use the fixed version instead of the original
+        return epub_helper.extract_chapter_markdown_fixed(book, chapter_id)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e))
+    except Exception as e:
+        raise Exception(str(e))
+
 # PDF related tools
 @mcp.tool()
 def get_all_pdf_files(path: str) -> List[str]:
