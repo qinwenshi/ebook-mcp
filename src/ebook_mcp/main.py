@@ -83,13 +83,11 @@ def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
     except Exception as e:
         raise Exception(str(e))
 
-@mcp.tool(deprecated=True)
+@mcp.tool()
 def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
-    """Get content of a given chapter of a given ebook.
-    
-    ⚠️ DEPRECATED: This tool has a known issue when processing EPUB files with subchapters.
+    """⚠️ DEPRECATED: This tool has a known issue when processing EPUB files with subchapters.
     When the TOC contains subchapters, it may prematurely truncate chapter content and only return the chapter title.
-    
+
     It is recommended to use get_epub_chapter_markdown_fixed for more accurate chapter extraction results.
 
     Args:
