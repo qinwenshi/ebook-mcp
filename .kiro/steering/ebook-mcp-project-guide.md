@@ -34,7 +34,7 @@ MCP Tool Layer
 System Base Layer
 ├── File Reading
 ├── ebooklib Parsing (EPUB)
-├── PyMuPDF/PyPDF2 Parsing (PDF)
+├── PyMuPDF Parsing (PDF)
 └── File Path Storage/Check
 ```
 
@@ -62,7 +62,7 @@ src/ebook_mcp/
 
 ### Dependency Management
 - Use `uv` as package manager
-- Core dependencies: ebooklib, PyPDF2, PyMuPDF, beautifulsoup4, html2text, fastmcp
+- Core dependencies: ebooklib, PyMuPDF, beautifulsoup4, html2text, fastmcp
 - Development dependencies: pytest, uvicorn, starlette
 
 ## MCP Tool Development Guide
@@ -109,7 +109,6 @@ def tool_function_name(param: str) -> ReturnType:
 
 ### PDF Processing
 - Use `PyMuPDF` (fitz) as the primary PDF processing library
-- Use `PyPDF2` as backup library
 - Support content extraction by page number and chapter title
 - Provide both plain text and Markdown format output
 
