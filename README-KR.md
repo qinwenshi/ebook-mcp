@@ -149,7 +149,7 @@ cd ebook-mcp
 
 2. `uv`를 사용하여 종속성 설치:
 ```bash
-uv pip install -r requirements.txt
+uv pip install -e .
 ```
 
 ## 사용법

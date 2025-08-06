@@ -149,7 +149,7 @@ cd ebook-mcp
 
 2. Abhängigkeiten mit `uv` installieren:
 ```bash
-uv pip install -r requirements.txt
+uv pip install -e .
 ```
 
 ## Verwendung

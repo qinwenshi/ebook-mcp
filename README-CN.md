@@ -149,7 +149,7 @@ cd ebook-mcp
 
 2. 使用`uv`安装依赖：
 ```bash
-uv pip install -r requirements.txt
+uv pip install -e .
 ```
 
 ## 使用方法

@@ -9,7 +9,7 @@ This project provides multiple MCP (Model Control Protocol) client examples for 
 
 Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Configuration
