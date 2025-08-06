@@ -124,7 +124,7 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
         # Extract standard fields
         for field, dc_field in standard_fields.items():
             items = book.get_metadata('DC', dc_field)
-            if items:
+            if items and len(items) > 0 and len(items[0]) > 0:
                 meta[field] = items[0][0]
 
         # Handle multi-value fields

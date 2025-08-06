@@ -2,8 +2,7 @@
 """
 PyMuPDF 元数据提取演示
 
-这个示例展示了如何使用 PyMuPDF 提取 PDF 文件的元数据，
-并与 PyPDF2 进行对比。
+这个示例展示了如何使用 PyMuPDF 提取 PDF 文件的元数据。
 """
 
 import os
@@ -14,15 +13,15 @@ from typing import Dict, Union, List
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 try:
-    from ebook_mcp.tools.pdf_helper import get_meta, get_meta_pypdf2
+    from ebook_mcp.tools.pdf_helper import get_meta
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     print(f"导入错误: {e}")
     DEPENDENCIES_AVAILABLE = False
 
-def print_metadata_comparison(pdf_path: str):
+def print_metadata_analysis(pdf_path: str):
     """
-    比较 PyMuPDF 和 PyPDF2 的元数据提取结果
+    分析 PDF 文件的元数据
     
     Args:
         pdf_path: PDF 文件路径
@@ -41,54 +40,52 @@ def print_metadata_comparison(pdf_path: str):
     try:
         # 使用 PyMuPDF 提取元数据
         print("🔍 使用 PyMuPDF 提取元数据:")
-        pymupdf_meta = get_meta(pdf_path)
+        meta = get_meta(pdf_path)
         
-        print("PyMuPDF 提取的字段:")
-        for key, value in pymupdf_meta.items():
-            print(f"  {key}: {value}")
-        
-        print("\n" + "-" * 40)
-        
-        # 使用 PyPDF2 提取元数据
-        print("🔍 使用 PyPDF2 提取元数据:")
-        pypdf2_meta = get_meta_pypdf2(pdf_path)
-        
-        print("PyPDF2 提取的字段:")
-        for key, value in pypdf2_meta.items():
+        print("提取的元数据字段:")
+        for key, value in meta.items():
             print(f"  {key}: {value}")
         
         print("\n" + "=" * 60)
         
-        # 比较结果
-        print("📊 对比分析:")
-        print(f"PyMuPDF 提取字段数: {len(pymupdf_meta)}")
-        print(f"PyPDF2 提取字段数: {len(pypdf2_meta)}")
+        # 分析元数据
+        print("📊 元数据分析:")
+        print(f"总字段数: {len(meta)}")
         
-        # PyMuPDF 独有的字段
-        pymupdf_only = set(pymupdf_meta.keys()) - set(pypdf2_meta.keys())
-        if pymupdf_only:
-            print(f"PyMuPDF 独有字段: {', '.join(pymupdf_only)}")
+        # 基本信息
+        if 'title' in meta:
+            print(f"📖 标题: {meta['title']}")
+        if 'author' in meta:
+            print(f"👤 作者: {meta['author']}")
+        if 'pages' in meta:
+            print(f"📄 页数: {meta['pages']}")
+        if 'file_size' in meta:
+            size_mb = meta['file_size'] / (1024 * 1024)
+            print(f"📁 文件大小: {size_mb:.2f} MB")
         
-        # PyPDF2 独有的字段
-        pypdf2_only = set(pypdf2_meta.keys()) - set(pymupdf_meta.keys())
-        if pypdf2_only:
-            print(f"PyPDF2 独有字段: {', '.join(pypdf2_only)}")
+        # 技术信息
+        if 'pdf_version' in meta:
+            print(f"🔧 PDF 版本: {meta['pdf_version']}")
+        if 'is_encrypted' in meta:
+            print(f"🔐 加密状态: {'是' if meta['is_encrypted'] else '否'}")
+        if 'page_width' in meta and 'page_height' in meta:
+            print(f"📏 页面尺寸: {meta['page_width']:.1f} x {meta['page_height']:.1f}")
         
-        # 共同字段
-        common_fields = set(pymupdf_meta.keys()) & set(pypdf2_meta.keys())
-        if common_fields:
-            print(f"共同字段: {', '.join(common_fields)}")
-            
-            # 检查共同字段的值是否一致
-            differences = []
-            for field in common_fields:
-                if pymupdf_meta[field] != pypdf2_meta[field]:
-                    differences.append(field)
-            
-            if differences:
-                print(f"值不一致的字段: {', '.join(differences)}")
-            else:
-                print("✅ 共同字段的值完全一致")
+        # 创建信息
+        if 'creator' in meta:
+            print(f"🛠️ 创建工具: {meta['creator']}")
+        if 'producer' in meta:
+            print(f"🏭 生产工具: {meta['producer']}")
+        if 'creation_date' in meta:
+            print(f"📅 创建日期: {meta['creation_date']}")
+        if 'modification_date' in meta:
+            print(f"📅 修改日期: {meta['modification_date']}")
+        
+        # 其他信息
+        if 'keywords' in meta:
+            print(f"🏷️ 关键词: {meta['keywords']}")
+        if 'format' in meta:
+            print(f"📝 格式: {meta['format']}")
         
     except Exception as e:
         print(f"❌ 提取元数据时出错: {e}")
@@ -106,10 +103,12 @@ def demonstrate_pymupdf_advantages():
     print("6. 📝 格式信息: 获取文档格式信息")
     print("7. ⚡ 性能: 更快的处理速度")
     print("8. 🛠️ 功能丰富: 支持更多 PDF 操作")
+    print("9. 🎯 专注性: 专门为 PDF 处理优化")
+    print("10. 🔧 现代化: 使用最新的 PDF 处理技术")
 
 def main():
     """主函数"""
-    print("🎯 PyMuPDF vs PyPDF2 元数据提取对比演示")
+    print("🎯 PyMuPDF PDF 元数据提取演示")
     print("=" * 60)
     
     # 演示 PyMuPDF 的优势
@@ -118,7 +117,7 @@ def main():
     # 如果有命令行参数，使用指定的 PDF 文件
     if len(sys.argv) > 1:
         pdf_path = sys.argv[1]
-        print_metadata_comparison(pdf_path)
+        print_metadata_analysis(pdf_path)
     else:
         print("\n💡 使用方法:")
         print("python pymupdf_metadata_demo.py <PDF文件路径>")
@@ -152,4 +151,4 @@ def main():
             print("\n❌ 未找到 PDF 文件")
 
 if __name__ == "__main__":
-    main() 
+    main()
