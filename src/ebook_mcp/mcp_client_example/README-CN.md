@@ -6,7 +6,7 @@
 
 安装依赖：
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## 配置

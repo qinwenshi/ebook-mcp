@@ -1,3 +1,4 @@
+from PyPDF2 import PdfReader
 from typing import List, Tuple, Dict, Union
 import os
 import logging
@@ -97,6 +98,59 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         raise FileNotFoundError(f"PDF file not found: {pdf_path}")
     except Exception as e:
         logger.error(f"Failed to parse PDF file: {str(e)}")
+        raise Exception("Failed to parse PDF file")
+
+def get_meta_pypdf2(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
+    """
+    Get metadata from a PDF file using PyPDF2 (legacy method)
+    
+    Args:
+        pdf_path (str): Absolute path to the PDF file
+        
+    Returns:
+        Dict[str, Union[str, List[str]]]: Dictionary containing metadata
+            
+    Raises:
+        FileNotFoundError: If the file does not exist
+        Exception: If the file is not a valid PDF or parsing fails
+    """
+    try:
+        if not os.path.exists(pdf_path):
+            logger.error(f"File not found: {pdf_path}")
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+            
+        # Read PDF file using PyPDF2
+        logger.debug(f"Starting to read PDF file with PyPDF2: {pdf_path}")
+        reader = PdfReader(pdf_path)
+        meta = {}
+
+        # Extract metadata from PDF
+        if reader.metadata:
+            # Standard metadata fields
+            standard_fields = {
+                'title': '/Title',
+                'author': '/Author',
+                'subject': '/Subject',
+                'creator': '/Creator',
+                'producer': '/Producer',
+                'creation_date': '/CreationDate',
+                'modification_date': '/ModDate'
+            }
+
+            for field, pdf_field in standard_fields.items():
+                if pdf_field in reader.metadata:
+                    meta[field] = reader.metadata[pdf_field]
+
+        # Add additional information
+        meta['pages'] = len(reader.pages)
+        
+        logger.debug(f"Successfully retrieved metadata with PyPDF2, fields: {list(meta.keys())}")
+        return meta
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+    except Exception as e:
+        logger.error(f"Failed to parse PDF file with PyPDF2: {str(e)}")
         raise Exception("Failed to parse PDF file")
 
 def get_toc(pdf_path: str) -> List[Tuple[str, int]]:
@@ -249,4 +303,4 @@ def extract_chapter_by_title(pdf_path: str, chapter_title: str) -> Tuple[str, Li
         
     except Exception as e:
         logger.error(f"Failed to extract chapter: {str(e)}")
-        raise Exception("Failed to extract chapter")
+        raise Exception("Failed to extract chapter") 

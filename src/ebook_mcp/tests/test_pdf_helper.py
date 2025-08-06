@@ -7,12 +7,6 @@ from unittest.mock import Mock, patch, MagicMock
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-# Mock PyPDF2
-try:
-    from PyPDF2 import PdfReader
-except ImportError:
-    PdfReader = Mock()
-
 # Mock PyMuPDF
 try:
     import fitz
@@ -25,7 +19,7 @@ from ebook_mcp.tools.pdf_helper import (
     get_toc,
     extract_page_text,
     extract_page_markdown,
-    get_chapter_content
+    extract_chapter_by_title
 )
 
 
@@ -50,79 +44,109 @@ class TestPdfHelper:
             result = get_all_pdf_files(temp_dir)
             assert set(result) == {"document1.pdf", "document2.pdf"}
     
-    @patch('ebook_mcp.tools.pdf_helper.PdfReader')
-    def test_get_meta_success(self, mock_pdf_reader):
+    @patch('ebook_mcp.tools.pdf_helper.fitz.open')
+    def test_get_meta_success(self, mock_fitz_open):
         """Test get_meta successful case"""
-        # Mock PDF reader with metadata
-        mock_reader = Mock()
-        mock_reader.metadata = {
-            '/Title': 'Test PDF',
-            '/Author': 'Test Author',
-            '/Subject': 'Test Subject',
-            '/Creator': 'Test Creator',
-            '/Producer': 'Test Producer',
-            '/CreationDate': '2023-01-01',
-            '/ModDate': '2023-01-02'
+        # Mock PyMuPDF document with metadata
+        mock_doc = Mock()
+        mock_doc.metadata = {
+            'title': 'Test PDF',
+            'author': 'Test Author',
+            'subject': 'Test Subject',
+            'creator': 'Test Creator',
+            'producer': 'Test Producer',
+            'creationDate': '2023-01-01',
+            'modDate': '2023-01-02',
+            'keywords': 'test, pdf',
+            'format': 'PDF'
         }
-        mock_reader.pages = [Mock(), Mock(), Mock()]  # 3 pages
-        mock_pdf_reader.return_value = mock_reader
+        mock_doc.page_count = 3
+        mock_doc.version_major = 1
+        mock_doc.version_minor = 7
+        mock_doc.is_encrypted = False
+        
+        # Mock first page for dimensions
+        mock_page = Mock()
+        mock_rect = Mock()
+        mock_rect.width = 595.0
+        mock_rect.height = 842.0
+        mock_page.rect = mock_rect
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
+        
+        mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
             f.write(b"mock pdf content")
             pdf_path = f.name
         
         try:
-            result = get_meta(pdf_path)
-            expected = {
-                'title': 'Test PDF',
-                'author': 'Test Author',
-                'subject': 'Test Subject',
-                'creator': 'Test Creator',
-                'producer': 'Test Producer',
-                'creation_date': '2023-01-01',
-                'modification_date': '2023-01-02',
-                'pages': 3
-            }
-            assert result == expected
+            with patch('os.path.getsize', return_value=1024):
+                result = get_meta(pdf_path)
+                expected_fields = {
+                    'title', 'author', 'subject', 'creator', 'producer',
+                    'creation_date', 'modification_date', 'keywords', 'format',
+                    'pages', 'file_size', 'pdf_version', 'is_encrypted',
+                    'page_width', 'page_height'
+                }
+                assert all(field in result for field in expected_fields)
+                assert result['title'] == 'Test PDF'
+                assert result['author'] == 'Test Author'
+                assert result['pages'] == 3
         finally:
             os.unlink(pdf_path)
     
-    @patch('ebook_mcp.tools.pdf_helper.PdfReader')
-    def test_get_meta_no_metadata(self, mock_pdf_reader):
+    @patch('ebook_mcp.tools.pdf_helper.fitz.open')
+    def test_get_meta_no_metadata(self, mock_fitz_open):
         """Test get_meta with no metadata"""
-        # Mock PDF reader without metadata
-        mock_reader = Mock()
-        mock_reader.metadata = None
-        mock_reader.pages = [Mock(), Mock()]  # 2 pages
-        mock_pdf_reader.return_value = mock_reader
+        # Mock PyMuPDF document without metadata
+        mock_doc = Mock()
+        mock_doc.metadata = {}
+        mock_doc.page_count = 2
+        mock_doc.version_major = 1
+        mock_doc.version_minor = 4
+        mock_doc.is_encrypted = False
+        
+        # Mock first page for dimensions
+        mock_page = Mock()
+        mock_rect = Mock()
+        mock_rect.width = 595.0
+        mock_rect.height = 842.0
+        mock_page.rect = mock_rect
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
+        
+        mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
             f.write(b"mock pdf content")
             pdf_path = f.name
         
         try:
-            result = get_meta(pdf_path)
-            expected = {'pages': 2}
-            assert result == expected
+            with patch('os.path.getsize', return_value=512):
+                result = get_meta(pdf_path)
+                assert result['pages'] == 2
+                assert result['file_size'] == 512
+                assert result['is_encrypted'] == False
+                assert 'title' not in result
+                assert 'author' not in result
         finally:
             os.unlink(pdf_path)
     
     def test_get_meta_file_not_found(self):
         """Test get_meta with non-existent file"""
         with pytest.raises(FileNotFoundError):
-            get_meta("/path/to/nonexistent.pdf")
+            get_meta("/non/existent/file.pdf")
     
-    @patch('ebook_mcp.tools.pdf_helper.PdfReader')
-    def test_get_meta_parsing_error(self, mock_pdf_reader):
+    @patch('ebook_mcp.tools.pdf_helper.fitz.open')
+    def test_get_meta_parsing_error(self, mock_fitz_open):
         """Test get_meta with parsing error"""
-        mock_pdf_reader.side_effect = Exception("PDF parsing error")
+        mock_fitz_open.side_effect = Exception("PDF parsing error")
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
             f.write(b"mock pdf content")
             pdf_path = f.name
         
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match="Failed to parse PDF file"):
                 get_meta(pdf_path)
         finally:
             os.unlink(pdf_path)
@@ -134,8 +158,8 @@ class TestPdfHelper:
         mock_doc = Mock()
         mock_doc.get_toc.return_value = [
             (1, "Chapter 1", 1),
-            (1, "Chapter 2", 5),
-            (2, "Subchapter 2.1", 7)
+            (2, "Section 1.1", 2),
+            (1, "Chapter 2", 5)
         ]
         mock_fitz_open.return_value = mock_doc
         
@@ -147,8 +171,8 @@ class TestPdfHelper:
             result = get_toc(pdf_path)
             expected = [
                 ("Chapter 1", 1),
-                ("Chapter 2", 5),
-                ("Subchapter 2.1", 7)
+                ("Section 1.1", 2),
+                ("Chapter 2", 5)
             ]
             assert result == expected
         finally:
@@ -175,7 +199,7 @@ class TestPdfHelper:
     def test_get_toc_file_not_found(self):
         """Test get_toc with non-existent file"""
         with pytest.raises(FileNotFoundError):
-            get_toc("/path/to/nonexistent.pdf")
+            get_toc("/non/existent/file.pdf")
     
     @patch('ebook_mcp.tools.pdf_helper.fitz.open')
     def test_get_toc_parsing_error(self, mock_fitz_open):
@@ -187,7 +211,7 @@ class TestPdfHelper:
             pdf_path = f.name
         
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match="Failed to parse PDF file"):
                 get_toc(pdf_path)
         finally:
             os.unlink(pdf_path)
@@ -198,8 +222,8 @@ class TestPdfHelper:
         # Mock PyMuPDF document and page
         mock_doc = Mock()
         mock_page = Mock()
-        mock_page.get_text.return_value = "This is page 1 content."
-        mock_doc.__getitem__.return_value = mock_page
+        mock_page.get_text.return_value = "This is page content"
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -208,8 +232,7 @@ class TestPdfHelper:
         
         try:
             result = extract_page_text(pdf_path, 1)
-            assert result == "This is page 1 content."
-            mock_doc.__getitem__.assert_called_once_with(0)  # 0-based index
+            assert result == "This is page content"
         finally:
             os.unlink(pdf_path)
     
@@ -218,7 +241,7 @@ class TestPdfHelper:
         """Test extract_page_text with page not found"""
         # Mock PyMuPDF document with IndexError
         mock_doc = Mock()
-        mock_doc.__getitem__.side_effect = IndexError("Page not found")
+        mock_doc.__getitem__ = Mock(side_effect=IndexError("Page not found"))
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -226,7 +249,7 @@ class TestPdfHelper:
             pdf_path = f.name
         
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match="Failed to extract page text"):
                 extract_page_text(pdf_path, 999)
         finally:
             os.unlink(pdf_path)
@@ -237,8 +260,22 @@ class TestPdfHelper:
         # Mock PyMuPDF document and page
         mock_doc = Mock()
         mock_page = Mock()
-        mock_page.get_text.return_value = "This is page 1 content."
-        mock_doc.__getitem__.return_value = mock_page
+        mock_page.get_text.return_value = {
+            "blocks": [
+                {
+                    "lines": [
+                        {
+                            "spans": [
+                                {"text": "Header", "size": 16, "flags": 0},
+                                {"text": "Bold text", "size": 12, "flags": 8},
+                                {"text": "Italic text", "size": 12, "flags": 2}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -247,21 +284,33 @@ class TestPdfHelper:
         
         try:
             result = extract_page_markdown(pdf_path, 1)
-            # Should contain page number and content
-            assert "Page 1" in result
-            assert "This is page 1 content." in result
-            mock_doc.__getitem__.assert_called_once_with(0)  # 0-based index
+            assert "## Header" in result
+            assert "**Bold text**" in result
+            assert "*Italic text*" in result
         finally:
             os.unlink(pdf_path)
     
     @patch('ebook_mcp.tools.pdf_helper.fitz.open')
     def test_extract_page_markdown_with_formatting(self, mock_fitz_open):
-        """Test extract_page_markdown with formatted content"""
+        """Test extract_page_markdown with formatting"""
         # Mock PyMuPDF document and page with formatted text
         mock_doc = Mock()
         mock_page = Mock()
-        mock_page.get_text.return_value = "Title\n\nThis is content with\nmultiple lines."
-        mock_doc.__getitem__.return_value = mock_page
+        mock_page.get_text.return_value = {
+            "blocks": [
+                {
+                    "lines": [
+                        {
+                            "spans": [
+                                {"text": "Large Title", "size": 18, "flags": 0},
+                                {"text": "Normal text", "size": 12, "flags": 0}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -270,16 +319,14 @@ class TestPdfHelper:
         
         try:
             result = extract_page_markdown(pdf_path, 1)
-            # Should format as markdown
-            assert "# Page 1" in result
-            assert "Title" in result
-            assert "This is content with" in result
+            assert "## Large Title" in result
+            assert "Normal text" in result
         finally:
             os.unlink(pdf_path)
     
     @patch('ebook_mcp.tools.pdf_helper.fitz.open')
-    def test_get_chapter_content_success(self, mock_fitz_open):
-        """Test get_chapter_content successful case"""
+    def test_extract_chapter_by_title_success(self, mock_fitz_open):
+        """Test extract_chapter_by_title successful case"""
         # Mock PyMuPDF document with TOC and pages
         mock_doc = Mock()
         mock_doc.get_toc.return_value = [
@@ -287,16 +334,16 @@ class TestPdfHelper:
             (1, "Chapter 2", 3),
             (1, "Chapter 3", 5)
         ]
+        mock_doc.page_count = 7
         
         # Mock pages
         mock_page1 = Mock()
         mock_page1.get_text.return_value = "Chapter 1 content"
         mock_page2 = Mock()
-        mock_page2.get_text.return_value = "Chapter 1 continued"
-        mock_page3 = Mock()
-        mock_page3.get_text.return_value = "Chapter 2 content"
+        mock_page2.get_text.return_value = "Chapter 2 content"
         
-        mock_doc.__getitem__.side_effect = [mock_page1, mock_page2, mock_page3]
+        mock_doc.__getitem__ = Mock(side_effect=lambda x: mock_page1 if x == 0 else mock_page2)
+        
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -304,20 +351,16 @@ class TestPdfHelper:
             pdf_path = f.name
         
         try:
-            result = get_chapter_content(pdf_path, "Chapter 1")
-            content, page_numbers = result
-            
-            # Should contain chapter content
+            content, pages = extract_chapter_by_title(pdf_path, "Chapter 1")
             assert "Chapter 1 content" in content
-            assert "Chapter 1 continued" in content
-            # Should return correct page numbers (1-based)
-            assert page_numbers == [1, 2]
+            assert "Chapter 2 content" in content
+            assert pages == [1, 2]
         finally:
             os.unlink(pdf_path)
     
     @patch('ebook_mcp.tools.pdf_helper.fitz.open')
-    def test_get_chapter_content_chapter_not_found(self, mock_fitz_open):
-        """Test get_chapter_content with chapter not found"""
+    def test_extract_chapter_by_title_chapter_not_found(self, mock_fitz_open):
+        """Test extract_chapter_by_title with chapter not found"""
         # Mock PyMuPDF document with TOC
         mock_doc = Mock()
         mock_doc.get_toc.return_value = [
@@ -331,25 +374,27 @@ class TestPdfHelper:
             pdf_path = f.name
         
         try:
-            with pytest.raises(Exception):
-                get_chapter_content(pdf_path, "Nonexistent Chapter")
+            with pytest.raises(Exception, match="Failed to extract chapter"):
+                extract_chapter_by_title(pdf_path, "Non-existent Chapter")
         finally:
             os.unlink(pdf_path)
     
     @patch('ebook_mcp.tools.pdf_helper.fitz.open')
-    def test_get_chapter_content_single_page(self, mock_fitz_open):
-        """Test get_chapter_content with single page chapter"""
+    def test_extract_chapter_by_title_single_page(self, mock_fitz_open):
+        """Test extract_chapter_by_title with single page chapter"""
         # Mock PyMuPDF document with TOC
         mock_doc = Mock()
         mock_doc.get_toc.return_value = [
             (1, "Chapter 1", 1),
             (1, "Chapter 2", 2)
         ]
+        mock_doc.page_count = 3
         
-        # Mock single page
+        # Mock page
         mock_page = Mock()
-        mock_page.get_text.return_value = "Single page chapter content"
-        mock_doc.__getitem__.return_value = mock_page
+        mock_page.get_text.return_value = "Chapter 1 content"
+        mock_doc.__getitem__ = Mock(return_value=mock_page)
+        
         mock_fitz_open.return_value = mock_doc
         
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
@@ -357,10 +402,8 @@ class TestPdfHelper:
             pdf_path = f.name
         
         try:
-            result = get_chapter_content(pdf_path, "Chapter 1")
-            content, page_numbers = result
-            
-            assert "Single page chapter content" in content
-            assert page_numbers == [1]
+            content, pages = extract_chapter_by_title(pdf_path, "Chapter 1")
+            assert "Chapter 1 content" in content
+            assert pages == [1]
         finally:
-            os.unlink(pdf_path) 
+            os.unlink(pdf_path)

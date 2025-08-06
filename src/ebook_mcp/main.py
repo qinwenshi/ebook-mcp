@@ -230,7 +230,7 @@ def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, Lis
     """
     logger.debug(f"calling get_pdf_chapter_content: {pdf_path}, chapter: {chapter_title}")
     try:
-        return pdf_helper.get_chapter_content(pdf_path, chapter_title)
+        return pdf_helper.extract_chapter_by_title(pdf_path, chapter_title)
     except Exception as e:
         raise Exception(str(e))
 

@@ -5,9 +5,11 @@
 <img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
 
 
-English | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md)
+English | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [📋 Changelog](CHANGELOG.md)
 
 Ebook-MCP is a powerful Model Context Protocol (MCP) server for processing electronic books. Built on the [Model Context Protocol](https://github.com/modelcontextprotocol), it provides a set of standardized APIs for seamless integration between LLM applications and e-book processing capabilities. Currently supports EPUB and PDF formats.
+
+Author: Yiming
 
 ## Use Cases & Value
 
@@ -29,7 +31,7 @@ Ebook-MCP transforms how you interact with your digital books by enabling natura
 
 By bridging the gap between traditional e-books and AI capabilities, Ebook-MCP helps readers extract more value from their digital library through intuitive, conversation-based interactions.
 
-Quick demo - Run with Deep Seek (Please check all the example's with Claude/OpenAI under mcp-client-example folder) 
+Quick demo - Run with DeepSeek (Please check all the examples with Claude/OpenAI under mcp-client-example folder) 
 ```
 Query:Please check all the epub books in my download folder. user id is onebird.
 ......
@@ -149,7 +151,7 @@ cd ebook-mcp
 
 2. Install dependencies using `uv`:
 ```bash
-uv pip install -r requirements.txt
+uv pip install -e .
 ```
 
 ## Usage
@@ -161,7 +163,7 @@ Run the server in development mode:
 uv run mcp dev src/ebook_mcp/main.py
 ```
 
-You can visit http://localhost:5173/ for testing & debuging purpose 
+You can visit http://localhost:5173/ for testing & debugging purpose 
 You can also install the inspector for the test.
 ```
 npx @modelcontextprotocol/inspector uv --directory . run src/ebook_mcp/main.py
@@ -177,7 +179,7 @@ uv run src/ebook_mcp/main.py
 
 #### Config the MCP in Cursor
 
-Add the following configuration in Cursoe
+Add the following configuration in Cursor
 ```bash
 "ebook-mcp":{
             "command": "uv",
@@ -313,12 +315,4 @@ Key dependencies include:
 
 We welcome Issues and Pull Requests!
 
-
-## Changelog
-
-### v1.0.5
-- Initial release
-- EPUB and PDF format support
-- Basic file processing APIs
-- MCP Client examples - Claude, DeepSeek, OpenAI
-- Support to run the server from PyPI
+For detailed information about recent changes, please see [CHANGELOG.md](CHANGELOG.md).
