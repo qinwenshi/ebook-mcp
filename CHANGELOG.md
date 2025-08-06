@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.5] - 2025-08-06
+## [0.1.7] - 2025-08-06
 
 ### 🔧 Refactored
 - **Modernized Dependency Management**: Removed `requirements.txt`, fully using `pyproject.toml` for dependency management
@@ -90,7 +90,7 @@ For existing users:
 
 ---
 
-## [1.0.4] - 2025-08-05
+## [0.1.4] - 2025-08-05
 
 ### 🔧 Fixed
 - Fixed subchapter truncation issue in EPUB chapter extraction
@@ -103,7 +103,7 @@ For existing users:
 - Updated test runner scripts
 - Improved error handling and logging
 
-## [1.0.3] - 2025-08-04
+## [0.1.3] - 2025-08-04
 
 ### 🌟 Added
 - Added comprehensive unit test suite
@@ -115,7 +115,7 @@ For existing users:
 - Optimized code structure and readability
 - Enhanced test coverage
 
-## [1.0.2] - 2025-08-03
+## [0.1.2] - 2025-08-03
 
 ### 🌟 Added
 - Added PDF chapter content extraction functionality
@@ -127,7 +127,7 @@ For existing users:
 - Improved error handling
 - Updated API documentation
 
-## [1.0.1] - 2025-08-02
+## [0.0.1] - 2025-08-02
 
 ### 🔧 Fixed
 - Fixed compatibility issues in PDF processing

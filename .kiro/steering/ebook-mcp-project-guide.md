@@ -160,10 +160,3 @@ npx @modelcontextprotocol/inspector uv --directory . run src/ebook_mcp/main.py
 - Use try-except blocks to wrap optional dependency imports
 - Provide clear error messages
 
-## Version Release
-
-Current version: v0.1.5
-- Support for EPUB and PDF formats
-- Complete MCP tool set
-- Includes client examples (Claude, DeepSeek, OpenAI)
-- Support for installation and running from PyPI
