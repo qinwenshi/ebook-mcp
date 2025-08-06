@@ -1,9 +1,29 @@
-from ebooklib import epub
 from typing import List, Tuple, Dict, Union
 import os
-from bs4 import BeautifulSoup, Comment
 import logging
-import html2text
+
+# Try to import optional dependencies
+try:
+    from ebooklib import epub
+    EBOOKLIB_AVAILABLE = True
+except ImportError:
+    epub = None
+    EBOOKLIB_AVAILABLE = False
+
+try:
+    from bs4 import BeautifulSoup, Comment
+    BEAUTIFULSOUP_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    Comment = None
+    BEAUTIFULSOUP_AVAILABLE = False
+
+try:
+    import html2text
+    HTML2TEXT_AVAILABLE = True
+except ImportError:
+    html2text = None
+    HTML2TEXT_AVAILABLE = False
 
 # Initialize logger
 logger = logging.getLogger(__name__)

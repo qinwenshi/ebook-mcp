@@ -3,35 +3,34 @@ import tempfile
 import os
 from unittest.mock import Mock, patch, MagicMock
 
-# Mock external dependencies
+# Add project root to path
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-# Mock ebooklib
+# Skip tests if dependencies are not available
 try:
     from ebooklib import epub
-except ImportError:
-    epub = Mock()
-
-# Mock BeautifulSoup
-try:
     from bs4 import BeautifulSoup
+    import html2text
+    DEPENDENCIES_AVAILABLE = True
 except ImportError:
-    BeautifulSoup = Mock()
+    DEPENDENCIES_AVAILABLE = False
 
-from ebook_mcp.tools.epub_helper import (
-    extract_chapter_html_fixed,
-    extract_chapter_html,  # 原函数用于对比
-    extract_chapter_markdown_fixed,
-    extract_chapter_markdown,  # 原函数用于对比
-    clean_html,
-    convert_html_to_markdown
-)
+if DEPENDENCIES_AVAILABLE:
+    from ebook_mcp.tools.epub_helper import (
+        extract_chapter_html_fixed,
+        extract_chapter_html,  # 原函数用于对比
+        extract_chapter_markdown_fixed,
+        extract_chapter_markdown,  # 原函数用于对比
+        clean_html,
+        convert_html_to_markdown
+    )
 
 
 class TestExtractChapterHtmlFixed:
     """Test the fixed version of extract_chapter_html function"""
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_simple_chapter_extraction(self):
         """Test simple chapter extraction without subchapters"""
         # Mock EPUB book
@@ -73,6 +72,7 @@ class TestExtractChapterHtmlFixed:
         assert "Chapter 1 content" in result
         assert "Chapter 2 content" not in result
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_chapter_with_subchapters_bug_case(self):
         """Test the specific bug case: chapter with subchapters causing premature truncation"""
         # Mock EPUB book
@@ -142,6 +142,7 @@ class TestExtractChapterHtmlFixed:
         assert "Another section content" not in result
         assert "Chapter 2 content" not in result
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_comparison_with_original_function(self):
         """Compare the fixed function with the original function"""
         # Mock EPUB book
@@ -193,6 +194,7 @@ class TestExtractChapterHtmlFixed:
         assert "Section 1.3 content" in fixed_result
         assert "Section 1.4 content" not in fixed_result
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_markdown_conversion_fixed(self):
         """Test the fixed markdown conversion function"""
         # Mock EPUB book
@@ -233,6 +235,7 @@ class TestExtractChapterHtmlFixed:
         assert "1.3 Append-only" in result
         assert "bold" in result
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_edge_cases(self):
         """Test edge cases and error conditions"""
         # Mock EPUB book
@@ -256,6 +259,7 @@ class TestExtractChapterHtmlFixed:
         with pytest.raises(ValueError, match="not found in TOC"):
             extract_chapter_html_fixed(mock_book, "chapter1.xhtml#nonexistent")
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_last_chapter_extraction(self):
         """Test extracting the last chapter (no next chapter)"""
         # Mock EPUB book
@@ -295,6 +299,7 @@ class TestExtractChapterHtmlFixed:
         assert "Chapter 2 content" in result
         assert "More content" in result
     
+    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_complex_nested_toc(self):
         """Test with complex nested TOC structure"""
         # Mock EPUB book
