@@ -307,11 +307,4 @@ PDFファイルから目次を取得。
 
 IssuesとPull Requestsを歓迎します！
 
-## 変更履歴
-
-### v1.0.5
-- 初回リリース
-- EPUBおよびPDF形式サポート
-- 基本的なファイル処理API
-- MCPクライアント例 - Claude、DeepSeek、OpenAI
-- PyPIからのサーバー実行サポート
+最近の変更の詳細については、[CHANGELOG.md](CHANGELOG.md)をご覧ください。

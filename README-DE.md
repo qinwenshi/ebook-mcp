@@ -307,11 +307,4 @@ Wichtige Abhängigkeiten umfassen:
 
 Wir begrüßen Issues und Pull Requests!
 
-## Änderungsprotokoll
-
-### v1.0.5
-- Erste Veröffentlichung
-- EPUB- und PDF-Format-Unterstützung
-- Grundlegende Dateiverarbeitungs-APIs
-- MCP-Client-Beispiele - Claude, DeepSeek, OpenAI
-- Unterstützung für das Ausführen des Servers von PyPI
+Detaillierte Informationen zu den letzten Änderungen finden Sie in [CHANGELOG.md](CHANGELOG.md).

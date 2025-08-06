@@ -307,11 +307,4 @@ chapter_content, page_numbers = get_pdf_chapter_content("/path/to/book.pdf", "Ch
 
 我们欢迎Issues和Pull Requests！
 
-## 更新日志
-
-### v1.0.5
-- 初始发布
-- EPUB和PDF格式支持
-- 基础文件处理API
-- MCP客户端示例 - Claude、DeepSeek、OpenAI
-- 支持从PyPI运行服务器
+有关最近更改的详细信息，请参阅 [CHANGELOG.md](CHANGELOG.md)。

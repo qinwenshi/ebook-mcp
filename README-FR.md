@@ -307,11 +307,4 @@ Les dépendances clés incluent :
 
 Nous accueillons les Issues et Pull Requests !
 
-## Journal des modifications
-
-### v1.0.5
-- Version initiale
-- Support des formats EPUB et PDF
-- APIs de traitement de fichiers de base
-- Exemples de clients MCP - Claude, DeepSeek, OpenAI
-- Support pour exécuter le serveur depuis PyPI
+Pour des informations détaillées sur les changements récents, veuillez consulter [CHANGELOG.md](CHANGELOG.md).

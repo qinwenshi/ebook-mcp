@@ -307,11 +307,4 @@ PDF 파일에서 목차를 가져옵니다.
 
 Issues와 Pull Requests를 환영합니다!
 
-## 변경 로그
-
-### v1.0.5
-- 초기 릴리스
-- EPUB 및 PDF 형식 지원
-- 기본 파일 처리 API
-- MCP 클라이언트 예제 - Claude, DeepSeek, OpenAI
-- PyPI에서 서버 실행 지원
+최근 변경사항에 대한 자세한 정보는 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.

@@ -315,12 +315,4 @@ Key dependencies include:
 
 We welcome Issues and Pull Requests!
 
-
-## Changelog
-
-### v1.0.5
-- Initial release
-- EPUB and PDF format support
-- Basic file processing APIs
-- MCP Client examples - Claude, DeepSeek, OpenAI
-- Support to run the server from PyPI
+For detailed information about recent changes, please see [CHANGELOG.md](CHANGELOG.md).
