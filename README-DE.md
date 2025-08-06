@@ -4,7 +4,7 @@
 
 <img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
 
-[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | [한국어](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-KR.md) | [Français](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-FR.md) | Deutsch
+[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | [한국어](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-KR.md) | [Français](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-FR.md) | Deutsch | [📋 Änderungsprotokoll](CHANGELOG.md)
 
 Ebook-MCP ist ein leistungsstarker Model Context Protocol (MCP) Server für die Verarbeitung elektronischer Bücher. Aufgebaut auf dem [Model Context Protocol](https://github.com/modelcontextprotocol), bietet es eine Reihe standardisierter APIs für die nahtlose Integration zwischen LLM-Anwendungen und E-Book-Verarbeitungsfunktionen. Unterstützt derzeit EPUB- und PDF-Formate.
 

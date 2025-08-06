@@ -4,7 +4,7 @@
 
 <img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
 
-[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | 한국어
+[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | 한국어 | [📋 변경 로그](CHANGELOG.md)
 
 Ebook-MCP는 전자책 처리를 위한 강력한 Model Context Protocol(MCP) 서버입니다. [Model Context Protocol](https://github.com/modelcontextprotocol) 위에 구축되어 LLM 애플리케이션과 전자책 처리 기능 간의 원활한 통합을 위한 표준화된 API 세트를 제공합니다. 현재 EPUB 및 PDF 형식을 지원합니다.
 

@@ -9,160 +9,160 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.5] - 2025-08-06
 
-### 🔧 重构 (Refactored)
-- **依赖管理现代化**: 移除 `requirements.txt`，完全使用 `pyproject.toml` 管理依赖
-  - 删除 `requirements.txt` 文件
-  - 更新所有README文件中的安装指令
-  - 统一使用现代Python包管理标准
-  - 简化安装流程：`uv pip install -e .` 或 `pip install -e .`
+### 🔧 Refactored
+- **Modernized Dependency Management**: Removed `requirements.txt`, fully using `pyproject.toml` for dependency management
+  - Deleted `requirements.txt` file
+  - Updated installation instructions in all README files
+  - Unified use of modern Python package management standards
+  - Simplified installation process: `uv pip install -e .` or `pip install -e .`
 
-- **PDF处理优化**: 移除 `PyPDF2` 依赖，完全使用 `PyMuPDF`
-  - 从 `pdf_helper.py` 中移除 `PyPDF2` 导入和 `get_meta_pypdf2` 函数
-  - 更新 `pyproject.toml`，移除 `PyPDF2` 依赖
-  - 删除 `test_pdf_metadata_comparison.py` 测试文件
-  - 更新相关测试，移除 `PyPDF2` 相关测试
-  - 修改 `pymupdf_metadata_demo.py`，移除 `PyPDF2` 比较逻辑
-  - 增强PDF元数据提取功能，提供更丰富的元数据信息
+- **PDF Processing Optimization**: Removed `PyPDF2` dependency, fully using `PyMuPDF`
+  - Removed `PyPDF2` imports and `get_meta_pypdf2` function from `pdf_helper.py`
+  - Updated `pyproject.toml`, removed `PyPDF2` dependency
+  - Deleted `test_pdf_metadata_comparison.py` test file
+  - Updated related tests, removed `PyPDF2` related tests
+  - Modified `pymupdf_metadata_demo.py`, removed `PyPDF2` comparison logic
+  - Enhanced PDF metadata extraction functionality, providing richer metadata information
 
-### 🌍 新增功能 (Added)
-- **国际化支持**: 添加多语言README文档
-  - 新增德文README (`README-DE.md`)
-  - 新增法文README (`README-FR.md`)
-  - 新增日文README (`README-JP.md`)
-  - 新增韩文README (`README-KR.md`)
-  - 添加Kiro翻译工具配置 (`.kiro/hooks/readme-translation-hook.kiro.hook`)
+### 🌍 Added
+- **Internationalization Support**: Added multilingual README documentation
+  - Added German README (`README-DE.md`)
+  - Added French README (`README-FR.md`)
+  - Added Japanese README (`README-JP.md`)
+  - Added Korean README (`README-KR.md`)
+  - Added Kiro translation tool configuration (`.kiro/hooks/readme-translation-hook.kiro.hook`)
 
-### 🔧 技术改进 (Technical Improvements)
-- **依赖管理**: 符合现代Python项目标准 (PEP 518/621)
-- **PDF处理**: 提高性能和稳定性，减少依赖冲突
-- **测试覆盖**: 所有测试通过 (76 passed, 5 skipped)
-- **代码质量**: 简化代码结构，提高可维护性
+### 🔧 Technical Improvements
+- **Dependency Management**: Compliant with modern Python project standards (PEP 518/621)
+- **PDF Processing**: Improved performance and stability, reduced dependency conflicts
+- **Test Coverage**: All tests passing (76 passed, 5 skipped)
+- **Code Quality**: Simplified code structure, improved maintainability
 
-### 📝 文档更新 (Documentation)
-- 更新所有README文件中的安装指令
-- 添加多语言支持文档
-- 更新MCP客户端示例文档
-- 改进项目文档的可访问性
+### 📝 Documentation
+- Updated installation instructions in all README files
+- Added multilingual support documentation
+- Updated MCP client example documentation
+- Improved project documentation accessibility
 
-### 🗑️ 移除 (Removed)
-- `requirements.txt` 文件
-- `PyPDF2` 依赖和相关代码
-- `test_pdf_metadata_comparison.py` 测试文件
-- 过时的安装指令引用
+### 🗑️ Removed
+- `requirements.txt` file
+- `PyPDF2` dependency and related code
+- `test_pdf_metadata_comparison.py` test file
+- Outdated installation instruction references
 
-### 🔄 向后兼容性 (Backward Compatibility)
-- ✅ 保持API兼容性，无需修改现有代码
-- ✅ 所有MCP工具正常工作
-- ✅ 功能完整性得到保证
+### 🔄 Backward Compatibility
+- ✅ Maintained API compatibility, no need to modify existing code
+- ✅ All MCP tools working normally
+- ✅ Functional integrity guaranteed
 
-### 📦 安装说明 (Installation)
+### 📦 Installation Instructions
 ```bash
-# 开发环境
+# Development environment
 git clone <repository-url>
 cd ebook-mcp
 uv pip install -e .
-# 或
+# or
 pip install -e .
 
-# 运行测试
+# Run tests
 ./run_tests.sh
-# 或
+# or
 pytest src/ebook_mcp/tests/
 ```
 
-### 🎯 影响评估 (Impact Assessment)
-- **正面影响**:
-  - 简化依赖管理
-  - 提高PDF处理性能
-  - 增强国际化支持
-  - 减少维护复杂度
-  - 符合现代Python项目标准
+### 🎯 Impact Assessment
+- **Positive Impact**:
+  - Simplified dependency management
+  - Improved PDF processing performance
+  - Enhanced internationalization support
+  - Reduced maintenance complexity
+  - Compliant with modern Python project standards
 
-- **潜在影响**:
-  - 用户需要更新安装方式
-  - 移除了PyPDF2的特定功能（已由PyMuPDF替代）
+- **Potential Impact**:
+  - Users need to update installation methods
+  - Removed specific PyPDF2 features (replaced by PyMuPDF)
 
-### 🔄 迁移指南 (Migration Guide)
-对于现有用户：
-1. 删除 `requirements.txt` 文件（如果存在）
-2. 使用 `uv pip install -e .` 重新安装
-3. 更新CI/CD配置（如果使用requirements.txt）
+### 🔄 Migration Guide
+For existing users:
+1. Delete `requirements.txt` file (if exists)
+2. Reinstall using `uv pip install -e .`
+3. Update CI/CD configuration (if using requirements.txt)
 
 ---
 
 ## [1.0.4] - 2025-08-05
 
-### 🔧 修复 (Fixed)
-- 修复EPUB章节提取中的子章节截断问题
-- 添加 `get_epub_chapter_markdown_fixed` 工具
-- 改进章节边界检测逻辑
-- 更新相关测试和文档
+### 🔧 Fixed
+- Fixed subchapter truncation issue in EPUB chapter extraction
+- Added `get_epub_chapter_markdown_fixed` tool
+- Improved chapter boundary detection logic
+- Updated related tests and documentation
 
-### 📝 文档更新 (Documentation)
-- 添加 `HOW-TO-TEST.md` 测试文档
-- 更新测试运行脚本
-- 改进错误处理和日志记录
+### 📝 Documentation
+- Added `HOW-TO-TEST.md` testing documentation
+- Updated test runner scripts
+- Improved error handling and logging
 
 ## [1.0.3] - 2025-08-04
 
-### 🌟 新增功能 (Added)
-- 添加完整的单元测试套件
-- 创建测试配置文件和运行脚本
-- 添加测试文档和示例
+### 🌟 Added
+- Added comprehensive unit test suite
+- Created test configuration files and runner scripts
+- Added test documentation and examples
 
-### 🔧 改进 (Improved)
-- 改进错误处理机制
-- 优化代码结构和可读性
-- 增强测试覆盖率
+### 🔧 Improved
+- Improved error handling mechanisms
+- Optimized code structure and readability
+- Enhanced test coverage
 
 ## [1.0.2] - 2025-08-03
 
-### 🌟 新增功能 (Added)
-- 添加PDF章节内容提取功能
-- 支持按章节标题提取内容
-- 添加Markdown格式输出支持
+### 🌟 Added
+- Added PDF chapter content extraction functionality
+- Support for extracting content by chapter title
+- Added Markdown format output support
 
-### 🔧 改进 (Improved)
-- 优化PDF元数据提取
-- 改进错误处理
-- 更新API文档
+### 🔧 Improved
+- Optimized PDF metadata extraction
+- Improved error handling
+- Updated API documentation
 
 ## [1.0.1] - 2025-08-02
 
-### 🔧 修复 (Fixed)
-- 修复PDF处理中的兼容性问题
-- 改进EPUB元数据提取
-- 优化文件路径处理
+### 🔧 Fixed
+- Fixed compatibility issues in PDF processing
+- Improved EPUB metadata extraction
+- Optimized file path handling
 
-### 📝 文档更新 (Documentation)
-- 更新安装说明
-- 添加使用示例
-- 改进API文档
+### 📝 Documentation
+- Updated installation instructions
+- Added usage examples
+- Improved API documentation
 
 ## [1.0.0] - 2025-08-01
 
-### 🌟 初始发布 (Initial Release)
-- EPUB和PDF格式支持
-- 基本文件处理API
-- MCP客户端示例 - Claude, DeepSeek, OpenAI
-- 支持从PyPI运行服务器
-- 基本的元数据提取功能
-- 表格内容提取支持
-- 章节内容提取功能
+### 🌟 Initial Release
+- EPUB and PDF format support
+- Basic file processing APIs
+- MCP client examples - Claude, DeepSeek, OpenAI
+- Support for running server from PyPI
+- Basic metadata extraction functionality
+- Table of contents extraction support
+- Chapter content extraction functionality
 
 ---
 
-## 版本说明 (Version Notes)
+## Version Notes
 
-### 语义化版本控制
-- **主版本号**: 不兼容的API修改
-- **次版本号**: 向下兼容的功能性新增
-- **修订号**: 向下兼容的问题修正
+### Semantic Versioning
+- **Major version**: Incompatible API changes
+- **Minor version**: Backward-compatible functionality additions
+- **Patch version**: Backward-compatible bug fixes
 
-### 变更类型
-- **Added**: 新功能
-- **Changed**: 对现有功能的变更
-- **Deprecated**: 已经不建议使用，准备很快移除的功能
-- **Removed**: 已经移除的功能
-- **Fixed**: 对bug的修复
-- **Security**: 对安全性的改进 
+### Change Types
+- **Added**: New features
+- **Changed**: Changes to existing functionality
+- **Deprecated**: Features that will be removed soon
+- **Removed**: Removed features
+- **Fixed**: Bug fixes
+- **Security**: Security improvements 
