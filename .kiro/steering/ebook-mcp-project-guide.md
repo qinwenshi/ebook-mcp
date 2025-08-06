@@ -47,6 +47,7 @@ System Base Layer
 - Functions and classes must include detailed docstrings
 - Error handling should use specific exception types
 - **All code comments and docstrings must be written in English**
+- **All description in README.md must be written in English**
 
 ### Project Structure
 ```
