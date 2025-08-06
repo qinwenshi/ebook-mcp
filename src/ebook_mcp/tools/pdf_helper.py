@@ -17,7 +17,7 @@ def get_all_pdf_files(path: str) -> List[str]:
 
 def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
     """
-    Get metadata from a PDF file
+    Get metadata from a PDF file using PyMuPDF
     
     Args:
         pdf_path (str): Absolute path to the PDF file
@@ -34,8 +34,93 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
             logger.error(f"File not found: {pdf_path}")
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
             
-        # Read PDF file
+        # Read PDF file using PyMuPDF
         logger.debug(f"Starting to read PDF file: {pdf_path}")
+        doc = fitz.open(pdf_path)
+        meta = {}
+
+        # Extract metadata from PDF using PyMuPDF
+        metadata = doc.metadata
+        
+        # Standard metadata fields mapping
+        standard_fields = {
+            'title': 'title',
+            'author': 'author', 
+            'subject': 'subject',
+            'creator': 'creator',
+            'producer': 'producer',
+            'creation_date': 'creationDate',
+            'modification_date': 'modDate',
+            'keywords': 'keywords',
+            'format': 'format'
+        }
+
+        # Extract standard metadata fields
+        for field, pdf_field in standard_fields.items():
+            if pdf_field in metadata and metadata[pdf_field]:
+                meta[field] = metadata[pdf_field]
+
+        # Add additional information
+        meta['pages'] = doc.page_count
+        meta['file_size'] = os.path.getsize(pdf_path)
+        
+        # Get PDF version and encryption info
+        try:
+            # Try to get version info - different PyMuPDF versions have different APIs
+            if hasattr(doc, 'version_major') and hasattr(doc, 'version_minor'):
+                meta['pdf_version'] = f"{doc.version_major}.{doc.version_minor}"
+            elif hasattr(doc, 'version'):
+                meta['pdf_version'] = str(doc.version)
+            else:
+                meta['pdf_version'] = "Unknown"
+        except:
+            meta['pdf_version'] = "Unknown"
+        
+        meta['is_encrypted'] = doc.is_encrypted
+        
+        # Get page dimensions (first page)
+        if doc.page_count > 0:
+            try:
+                first_page = doc[0]
+                rect = first_page.rect
+                meta['page_width'] = rect.width
+                meta['page_height'] = rect.height
+            except:
+                # If we can't get page dimensions, skip it
+                pass
+        
+        doc.close()
+        
+        logger.debug(f"Successfully retrieved metadata with fields: {list(meta.keys())}")
+        return meta
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+    except Exception as e:
+        logger.error(f"Failed to parse PDF file: {str(e)}")
+        raise Exception("Failed to parse PDF file")
+
+def get_meta_pypdf2(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
+    """
+    Get metadata from a PDF file using PyPDF2 (legacy method)
+    
+    Args:
+        pdf_path (str): Absolute path to the PDF file
+        
+    Returns:
+        Dict[str, Union[str, List[str]]]: Dictionary containing metadata
+            
+    Raises:
+        FileNotFoundError: If the file does not exist
+        Exception: If the file is not a valid PDF or parsing fails
+    """
+    try:
+        if not os.path.exists(pdf_path):
+            logger.error(f"File not found: {pdf_path}")
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+            
+        # Read PDF file using PyPDF2
+        logger.debug(f"Starting to read PDF file with PyPDF2: {pdf_path}")
         reader = PdfReader(pdf_path)
         meta = {}
 
@@ -59,13 +144,13 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         # Add additional information
         meta['pages'] = len(reader.pages)
         
-        logger.debug(f"Successfully retrieved metadata with fields: {list(meta.keys())}")
+        logger.debug(f"Successfully retrieved metadata with PyPDF2, fields: {list(meta.keys())}")
         return meta
 
     except FileNotFoundError:
         raise FileNotFoundError(f"PDF file not found: {pdf_path}")
     except Exception as e:
-        logger.error(f"Failed to parse PDF file: {str(e)}")
+        logger.error(f"Failed to parse PDF file with PyPDF2: {str(e)}")
         raise Exception("Failed to parse PDF file")
 
 def get_toc(pdf_path: str) -> List[Tuple[str, int]]:
