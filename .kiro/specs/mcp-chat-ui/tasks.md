@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Set up project structure and core dependencies
+- [x] 1. Set up project structure and core dependencies
   - Create Vite + React + TypeScript project with recommended folder structure
   - Install and configure core dependencies: Tailwind CSS, Zustand, React Router, react-i18next
   - Set up path aliases and development tools (ESLint, Prettier)
@@ -8,13 +8,13 @@
   - _Requirements: 6.1, 6.3, 6.4_
 
 - [ ] 2. Implement internationalization foundation
-  - [ ] 2.1 Configure react-i18next with English and Chinese support
+  - [x] 2.1 Configure react-i18next with English and Chinese support
     - Set up i18n configuration with language detection and fallback
     - Create translation files for English (default) and Chinese
     - Implement language switching functionality
     - _Requirements: 8.4, 9.4_
 
-  - [ ] 2.2 Create core translation keys and utilities
+  - [x] 2.2 Create core translation keys and utilities
     - Define translation key structure for common, chat, settings, and error messages
     - Implement translation hook and utilities for components
     - Add language selection component for settings
