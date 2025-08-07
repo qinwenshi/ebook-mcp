@@ -74,22 +74,22 @@
     - Add other application preferences (auto-scroll, sound)
     - _Requirements: 8.4, 8.5_
 
-- [ ] 6. Develop chat interface components
-  - [ ] 6.1 Create message display components
+- [x] 6. Develop chat interface components
+  - [x] 6.1 Create message display components
     - Build MessageList component with different message types (user, assistant, tool)
     - Implement markdown rendering for formatted content
     - Add message timestamps, copy functionality, and proper styling
     - Create auto-scrolling behavior and smooth scrolling
     - _Requirements: 1.1, 1.3, 1.4_
 
-  - [ ] 6.2 Build message input interface
+  - [x] 6.2 Build message input interface
     - Create MessageInput component with auto-resize text area
     - Implement send button with loading states and keyboard shortcuts
     - Add input validation and character count
     - Create proper focus management and accessibility
     - _Requirements: 1.2, 8.5_
 
-  - [ ] 6.3 Implement tool confirmation dialog
+  - [x] 6.3 Implement tool confirmation dialog
     - Build ToolConfirmationDialog component with clear tool information display
     - Show tool name, description, and parameters with syntax highlighting
     - Create Run/Cancel buttons with proper visual hierarchy
