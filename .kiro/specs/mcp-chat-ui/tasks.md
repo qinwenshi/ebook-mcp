@@ -97,14 +97,14 @@
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
 - [ ] 7. Set up Next.js backend and API infrastructure
-  - [ ] 7.1 Initialize Next.js backend with API routes
+  - [x] 7.1 Initialize Next.js backend with API routes
     - Set up Next.js project structure with App Router
     - Create API route structure for chat, settings, and tool execution
     - Implement request/response interfaces and error handling
     - Add CORS configuration and security middleware
     - _Requirements: 6.2_
 
-  - [ ] 7.2 Implement session management service
+  - [x] 7.2 Implement session management service
     - Create SessionManager for chat session persistence
     - Implement session storage, retrieval, and cleanup
     - Add session search and filtering capabilities
