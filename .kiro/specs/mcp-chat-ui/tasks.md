@@ -41,13 +41,13 @@
     - _Requirements: 9.2, 9.3, 9.4, 9.5_
 
 - [ ] 4. Implement state management with Zustand
-  - [ ] 4.1 Create settings store
+  - [x] 4.1 Create settings store
     - Implement SettingsStore with LLM provider and MCP server configuration
     - Add user preferences management including language and theme
     - Create persistent storage for settings using localStorage
     - _Requirements: 2.2, 7.2_
 
-  - [ ] 4.2 Create chat store
+  - [x] 4.2 Create chat store
     - Implement ChatStore for session and message management
     - Add message handling, loading states, and tool call management
     - Create session persistence and auto-save functionality

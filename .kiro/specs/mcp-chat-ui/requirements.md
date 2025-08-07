@@ -29,7 +29,7 @@ The chat UI follows a three-tier architecture: React frontend for user interacti
 1. WHEN I access settings THEN the system SHALL provide options to configure OpenAI, DeepSeek, and OpenRouter providers
 2. WHEN I enter API credentials THEN the system SHALL securely store them locally without transmitting to external servers
 3. WHEN I test my API configuration THEN the system SHALL validate the connection and display success/error status
-4. WHEN I switch between providers THEN the system SHALL update the active LLM without losing chat context
+4. WHEN I create a new chat THEN the system SHALL allow me to select the LLM provider and specific model that supports tool calling
 5. IF my API key is invalid THEN the system SHALL display clear error messages and prevent chat attempts
 
 ### Requirement 3
@@ -38,11 +38,12 @@ The chat UI follows a three-tier architecture: React frontend for user interacti
 
 #### Acceptance Criteria
 
-1. WHEN I configure MCP server settings THEN the system SHALL allow me to specify server commands and arguments
-2. WHEN the system starts THEN it SHALL automatically connect to configured MCP servers using StdioClientTransport
-3. WHEN MCP servers are connected THEN the system SHALL list available tools and their schemas
-4. WHEN an MCP server is unavailable THEN the system SHALL display connection status and retry options
-5. WHEN I update MCP configuration THEN the system SHALL reconnect to servers without requiring app restart
+1. WHEN I configure MCP server settings THEN the system SHALL support JSON configuration format for server definitions
+2. WHEN I specify MCP servers THEN the system SHALL allow me to define server commands, arguments, and environment variables
+3. WHEN the system starts THEN it SHALL automatically connect to configured MCP servers using StdioClientTransport
+4. WHEN MCP servers are connected THEN the system SHALL list available tools and their schemas
+5. WHEN an MCP server is unavailable THEN the system SHALL display connection status and retry options
+6. WHEN I update MCP configuration THEN the system SHALL reconnect to servers without requiring app restart
 
 ### Requirement 4
 
@@ -91,7 +92,6 @@ The chat UI follows a three-tier architecture: React frontend for user interacti
 3. WHEN MCP tools execute THEN they SHALL run on my local machine with my permissions
 4. WHEN I close the application THEN sensitive data SHALL be cleared from memory appropriately
 5. WHEN I export chat history THEN it SHALL be saved locally without cloud synchronization
-
 ### Requirement 8
 
 **User Story:** As a user, I want a responsive and intuitive interface, so that I can use the chat application effectively on different devices.
@@ -103,3 +103,15 @@ The chat UI follows a three-tier architecture: React frontend for user interacti
 3. WHEN I interact with UI elements THEN they SHALL provide immediate visual feedback and loading states
 4. WHEN I navigate between sections THEN the transitions SHALL be smooth and maintain context
 5. WHEN I use keyboard shortcuts THEN common actions SHALL be accessible (Enter to send, Escape to cancel)
+
+### Requirement 9
+
+**User Story:** As a user, I want to manage my chat history and sessions, so that I can organize and revisit my conversations.
+
+#### Acceptance Criteria
+
+1. WHEN I create a new chat THEN the system SHALL automatically generate a descriptive title using the LLM based on the conversation content
+2. WHEN I view my chat history THEN the system SHALL display a list of previous conversations with their auto-generated titles
+3. WHEN I click on a chat in history THEN the system SHALL load the complete conversation with all messages and context
+4. WHEN I want to organize chats THEN the system SHALL allow me to rename, delete, or archive conversations
+5. WHEN I search through chat history THEN the system SHALL provide text search across conversation titles and content

@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { useCallback } from 'react';
+import { useSettingsStore } from '../store';
+import type { Language } from '../types';
 
-export type SupportedLanguage = 'en' | 'zh';
+export type SupportedLanguage = Language;
 
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'zh'];
 
@@ -12,20 +14,21 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
 
 export const useLanguage = () => {
   const { i18n } = useTranslation();
+  const { preferences, changeLanguage: changeLanguageInStore } = useSettingsStore();
 
-  const currentLanguage = i18n.language as SupportedLanguage;
+  const currentLanguage = preferences.language;
 
   const changeLanguage = useCallback(
     async (language: SupportedLanguage) => {
       try {
         await i18n.changeLanguage(language);
-        // Store the language preference in localStorage
-        localStorage.setItem('i18nextLng', language);
+        // Update the settings store
+        changeLanguageInStore(language);
       } catch (error) {
         console.error('Failed to change language:', error);
       }
     },
-    [i18n]
+    [i18n, changeLanguageInStore]
   );
 
   const isLanguageSupported = useCallback(
