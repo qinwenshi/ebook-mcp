@@ -1,0 +1,258 @@
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button, Input, Modal } from './ui';
+import { LanguageSelector } from './LanguageSelector';
+import ChatHistoryItem from './ChatHistoryItem';
+import NewChatModal from './NewChatModal';
+import { useChatSessions, type ChatSession } from '../hooks/useChatSessions';
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentSessionId?: string;
+  onSessionSelect: (sessionId: string) => void;
+  onNewChat: (provider: string, model: string) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  currentSessionId,
+  onSessionSelect,
+  onNewChat,
+}) => {
+  const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [renameSessionId, setRenameSessionId] = useState('');
+  const [newSessionTitle, setNewSessionTitle] = useState('');
+  const [deleteSessionId, setDeleteSessionId] = useState('');
+
+  const {
+    chatSessions,
+    createSession,
+    deleteSession,
+    renameSession,
+    searchSessions,
+  } = useChatSessions();
+
+
+
+  // Filter sessions based on search query
+  const filteredSessions = searchSessions(searchQuery);
+
+  const handleNewChat = () => {
+    setShowNewChatModal(true);
+  };
+
+  const handleCreateNewChat = (provider: string, model: string) => {
+    const newSessionId = createSession(provider, model);
+    onNewChat(provider, model);
+    onSessionSelect(newSessionId);
+    setShowNewChatModal(false);
+  };
+
+  const handleRenameSession = (sessionId: string, currentTitle: string) => {
+    setRenameSessionId(sessionId);
+    setNewSessionTitle(currentTitle);
+    setShowRenameModal(true);
+  };
+
+  const handleConfirmRename = () => {
+    if (renameSessionId && newSessionTitle.trim()) {
+      renameSession(renameSessionId, newSessionTitle.trim());
+      setShowRenameModal(false);
+      setRenameSessionId('');
+      setNewSessionTitle('');
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    setDeleteSessionId(sessionId);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteSessionId) {
+      deleteSession(deleteSessionId);
+      setShowDeleteModal(false);
+      setDeleteSessionId('');
+    }
+  };
+
+
+
+  return (
+    <>
+      <div className="flex flex-col h-full">
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t('app.title', 'MCP Chat UI')}
+          </h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden"
+            onClick={onClose}
+            aria-label={t('common.close', 'Close')}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
+        </div>
+
+        {/* Sidebar content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* New Chat Button */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <Button
+              variant="primary"
+              size="md"
+              fullWidth
+              onClick={handleNewChat}
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              }
+            >
+              {t('chat.newChat', 'New Chat')}
+            </Button>
+          </div>
+
+          {/* Search */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <Input
+              placeholder={t('chat.searchHistory', 'Search chat history...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
+              fullWidth
+            />
+          </div>
+
+          {/* Chat History */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                {t('chat.chatHistory', 'Chat History')}
+              </h2>
+              
+              {filteredSessions.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-3 py-2">
+                  {searchQuery ? 
+                    t('chat.noSearchResults', 'No matching conversations found') :
+                    t('chat.noHistory', 'No chat history yet')
+                  }
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredSessions.map((session) => (
+                    <ChatHistoryItem
+                      key={session.id}
+                      session={session}
+                      isActive={currentSessionId === session.id}
+                      onClick={() => onSessionSelect(session.id)}
+                      onRename={() => handleRenameSession(session.id, session.title)}
+                      onDelete={() => handleDeleteSession(session.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar footer */}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mb-3">
+              <LanguageSelector />
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {t('app.version', 'Version 1.0.0')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* New Chat Modal */}
+      <NewChatModal
+        isOpen={showNewChatModal}
+        onClose={() => setShowNewChatModal(false)}
+        onCreateChat={handleCreateNewChat}
+      />
+
+      {/* Rename Session Modal */}
+      <Modal
+        isOpen={showRenameModal}
+        onClose={() => setShowRenameModal(false)}
+        title={t('chat.renameSession', 'Rename Session')}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label={t('chat.sessionTitle', 'Session Title')}
+            value={newSessionTitle}
+            onChange={(e) => setNewSessionTitle(e.target.value)}
+            placeholder={t('chat.enterTitle', 'Enter session title')}
+            fullWidth
+          />
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowRenameModal(false)}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleConfirmRename}
+              disabled={!newSessionTitle.trim()}
+            >
+              {t('common.save', 'Save')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Session Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title={t('chat.deleteSession', 'Delete Session')}
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            {t('chat.deleteConfirmation', 'Are you sure you want to delete this chat session? This action cannot be undone.')}
+          </p>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDelete}
+            >
+              {t('common.delete', 'Delete')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+export default Sidebar;

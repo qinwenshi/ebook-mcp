@@ -20,20 +20,20 @@
     - Add language selection component for settings
     - _Requirements: 8.4, 9.4_
 
-- [ ] 3. Build core UI components and layout
-  - [ ] 3.1 Create base UI components
+- [-] 3. Build core UI components and layout
+  - [x] 3.1 Create base UI components
     - Implement Button, Input, Modal, and other reusable UI components with Tailwind CSS
     - Add loading states, error states, and accessibility features
     - Create component variants and proper TypeScript interfaces
     - _Requirements: 8.3, 8.5_
 
-  - [ ] 3.2 Implement main application layout
+  - [x] 3.2 Implement main application layout
     - Create AppLayout component with sidebar and main content area
     - Implement responsive design for desktop and mobile views
     - Add navigation structure and routing setup
     - _Requirements: 8.1, 8.2, 8.4_
 
-  - [ ] 3.3 Build sidebar with chat history
+  - [x] 3.3 Build sidebar with chat history
     - Create Sidebar component with chat session list
     - Implement new chat button with provider/model selection
     - Add search functionality for chat history

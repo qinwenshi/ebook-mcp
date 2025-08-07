@@ -14,12 +14,21 @@
     "previous": "Previous",
     "search": "Search",
     "clear": "Clear",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "openMenu": "Open menu",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago"
+  },
+  "app": {
+    "title": "MCP Chat UI",
+    "version": "Version 1.0.0"
   },
   "chat": {
     "sendMessage": "Send message",
     "newChat": "New Chat",
     "chatHistory": "Chat History",
+    "noHistory": "No chat history yet",
     "toolConfirmation": "Tool Confirmation",
     "runTool": "Run Tool",
     "cancelTool": "Cancel Tool",
@@ -42,11 +51,24 @@
     "toolParameters": "Tool Parameters",
     "toolDescription": "Tool Description",
     "confirmToolExecution": "Are you sure you want to run this tool?",
-    "toolExecutionWarning": "This tool will perform actions on your system."
+    "toolExecutionWarning": "This tool will perform actions on your system.",
+    "searchHistory": "Search chat history...",
+    "noSearchResults": "No matching conversations found",
+    "createChat": "Create Chat",
+    "enterTitle": "Enter session title",
+    "deleteConfirmation": "Are you sure you want to delete this chat session? This action cannot be undone.",
+    "newChatDescription": "Select an LLM provider and model to start a new conversation.",
+    "selectedConfiguration": "Selected Configuration:",
+    "provider": "Provider",
+    "model": "Model"
   },
   "settings": {
     "title": "Settings",
+    "description": "Configure your MCP Chat UI preferences and connections",
+    "general": "General",
     "llmProvider": "LLM Provider",
+    "llmProviderDescription": "Configure your AI model provider and API credentials",
+    "mcpServersDescription": "Manage your Model Context Protocol server connections",
     "mcpServers": "MCP Servers",
     "language": "Language",
     "theme": "Theme",

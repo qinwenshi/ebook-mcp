@@ -51,14 +51,14 @@ export const createTypedTranslation = (t: TFunction) => {
 
 // Translation namespace helpers
 export const createNamespacedTranslation = (t: TFunction) => ({
-  common: (key: CommonKeys, options?: any) => t(`common.${key}`, options),
-  chat: (key: ChatKeys, options?: any) => t(`chat.${key}`, options),
-  settings: (key: SettingsKeys, options?: any) => t(`settings.${key}`, options),
-  errors: (key: ErrorKeys, options?: any) => t(`errors.${key}`, options),
-  navigation: (key: NavigationKeys, options?: any) => t(`navigation.${key}`, options),
-  providers: (key: ProviderKeys, options?: any) => t(`providers.${key}`, options),
-  languages: (key: LanguageKeys, options?: any) => t(`languages.${key}`, options),
-  themes: (key: ThemeKeys, options?: any) => t(`themes.${key}`, options),
+  common: (key: CommonKeys, options?: any) => String(t(`common.${key}`, options)),
+  chat: (key: ChatKeys, options?: any) => String(t(`chat.${key}`, options)),
+  settings: (key: SettingsKeys, options?: any) => String(t(`settings.${key}`, options)),
+  errors: (key: ErrorKeys, options?: any) => String(t(`errors.${key}`, options)),
+  navigation: (key: NavigationKeys, options?: any) => String(t(`navigation.${key}`, options)),
+  providers: (key: ProviderKeys, options?: any) => String(t(`providers.${key}`, options)),
+  languages: (key: LanguageKeys, options?: any) => String(t(`languages.${key}`, options)),
+  themes: (key: ThemeKeys, options?: any) => String(t(`themes.${key}`, options)),
 });
 
 // Language detection utilities
@@ -110,7 +110,7 @@ export const pluralize = (
   count: number,
   options?: any
 ): string => {
-  return t(key, { count, ...options });
+  return String(t(key, { count, ...options }));
 };
 
 // Translation with interpolation helper
@@ -119,7 +119,7 @@ export const translateWithValues = (
   key: TranslationKey,
   values: Record<string, any>
 ): string => {
-  return t(key, values);
+  return String(t(key, values));
 };
 
 // Validation helper for translation keys
