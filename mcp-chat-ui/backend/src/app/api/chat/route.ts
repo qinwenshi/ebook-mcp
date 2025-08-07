@@ -16,6 +16,8 @@ async function chatHandler(request: Request): Promise<NextResponse> {
     );
   }
 
+  console.log('Processing chat request');
+
   // Ensure backend is initialized
   await ensureInitialized();
 
@@ -33,8 +35,13 @@ async function chatHandler(request: Request): Promise<NextResponse> {
   } = body;
 
   // Validate API key is provided
-  if (!apiKey || typeof apiKey !== 'string') {
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
     throw new ValidationError('API key is required for chat requests');
+  }
+
+  // Basic API key format validation
+  if (apiKey.length < 10) {
+    throw new ValidationError('API key appears to be invalid (too short)');
   }
 
   try {
@@ -74,19 +81,20 @@ async function chatHandler(request: Request): Promise<NextResponse> {
       sessionId: response.sessionId,
     };
 
+    console.log(`Chat request processed successfully for session: ${response.sessionId}`);
     return NextResponse.json(chatResponse);
   } catch (error) {
     console.error('Chat processing error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const statusCode = error instanceof ValidationError ? 400 : 500;
+    
     const chatResponse: ChatResponse = {
       sessionId: chatRequest.sessionId,
       error: errorMessage,
     };
 
-    return NextResponse.json(chatResponse, { 
-      status: error instanceof ValidationError ? 400 : 500 
-    });
+    return NextResponse.json(chatResponse, { status: statusCode });
   }
 }
 

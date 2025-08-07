@@ -3,8 +3,6 @@ import { withCors } from '@/lib/cors';
 import { handleAsyncRoute } from '@/lib/errors';
 import { ValidationError } from '@/lib/errors';
 import { getToolExecutionService } from '@/services/ToolExecutionService';
-import { SessionManager } from '@/services/SessionManager';
-import { Message } from '@/types';
 
 interface CancelToolRequest {
   toolCallId: string;
@@ -51,7 +49,7 @@ async function cancelToolHandler(request: Request): Promise<NextResponse> {
   const cancelRequest = validateCancelToolRequest(body);
 
   try {
-    console.log(`Processing tool cancellation request for: ${cancelRequest.toolCallId}`);
+    console.log(`Processing tool cancellation request for: ${cancelRequest.toolCallId} (session: ${cancelRequest.sessionId})`);
     
     const toolExecutionService = getToolExecutionService();
     
@@ -61,7 +59,7 @@ async function cancelToolHandler(request: Request): Promise<NextResponse> {
       cancelRequest.sessionId
     );
 
-    console.log(`Tool cancellation processed for: ${cancelRequest.toolCallId}`);
+    console.log(`Tool cancellation processed successfully for: ${cancelRequest.toolCallId}`);
 
     const response: CancelToolResponse = {
       success: result.success,
@@ -72,8 +70,8 @@ async function cancelToolHandler(request: Request): Promise<NextResponse> {
     return NextResponse.json(response, { status: result.success ? 200 : 500 });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Tool cancellation failed:`, errorMessage);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Tool cancellation failed for ${cancelRequest.toolCallId}:`, errorMessage);
 
     const errorResponse: CancelToolResponse = {
       success: false,

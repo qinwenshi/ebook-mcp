@@ -142,14 +142,14 @@
     - _Requirements: 4.3, 4.4, 4.5, 5.2, 5.3, 5.4_
 
 - [ ] 10. Implement API endpoints
-  - [ ] 10.1 Create chat API endpoints
+  - [x] 10.1 Create chat API endpoints
     - Build POST /api/chat endpoint for message processing
     - Implement POST /api/run-tool endpoint for tool execution
     - Add POST /api/cancel-tool endpoint for tool cancellation
     - Create proper error handling and response formatting
     - _Requirements: 1.2, 1.3, 4.3, 4.4, 5.1, 5.2, 5.3_
 
-  - [ ] 10.2 Build settings and history API endpoints
+  - [x] 10.2 Build settings and history API endpoints
     - Create GET/POST /api/settings endpoints for configuration management
     - Implement GET /api/chat-history endpoint for session retrieval
     - Add DELETE /api/chat-history/:id endpoint for session deletion

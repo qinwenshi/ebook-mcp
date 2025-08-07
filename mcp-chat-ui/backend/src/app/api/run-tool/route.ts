@@ -3,7 +3,7 @@ import { withCors } from '@/lib/cors';
 import { handleAsyncRoute } from '@/lib/errors';
 import { validateRunToolRequest } from '@/lib/validation';
 import { getToolExecutionService } from '@/services/ToolExecutionService';
-import { RunToolRequest, RunToolResponse } from '@/types';
+import { RunToolResponse } from '@/types';
 
 async function runToolHandler(request: Request): Promise<NextResponse> {
   if (request.method !== 'POST') {
@@ -21,7 +21,7 @@ async function runToolHandler(request: Request): Promise<NextResponse> {
   const toolRequest = validateRunToolRequest(body);
 
   try {
-    console.log(`Processing tool execution request for: ${toolRequest.toolCall.function.name}`);
+    console.log(`Processing tool execution request for: ${toolRequest.toolCall.function.name} (session: ${toolRequest.sessionId})`);
     
     // Get the tool execution service
     const toolExecutionService = getToolExecutionService();
@@ -29,13 +29,13 @@ async function runToolHandler(request: Request): Promise<NextResponse> {
     // Process the tool execution with full workflow
     const response = await toolExecutionService.processToolExecution(toolRequest);
     
-    console.log(`Tool execution completed for: ${toolRequest.toolCall.function.name}`);
+    console.log(`Tool execution completed successfully for: ${toolRequest.toolCall.function.name}`);
     
     return NextResponse.json(response);
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Tool execution failed:`, errorMessage);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`Tool execution failed for ${toolRequest.toolCall.function.name}:`, errorMessage);
 
     const errorResponse: RunToolResponse = {
       result: '',
