@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { withCors } from '@/lib/cors';
 import { handleAsyncRoute } from '@/lib/errors';
 import { ValidationError } from '@/lib/errors';
+import { getToolExecutionService } from '@/services/ToolExecutionService';
+import { SessionManager } from '@/services/SessionManager';
+import { Message } from '@/types';
 
 interface CancelToolRequest {
   toolCallId: string;
@@ -47,27 +50,35 @@ async function cancelToolHandler(request: Request): Promise<NextResponse> {
   const body = await request.json();
   const cancelRequest = validateCancelToolRequest(body);
 
-  // TODO: Implement actual tool cancellation logic
-  // For now, return a mock response
   try {
-    // In a real implementation, this would:
-    // 1. Find the running tool execution by toolCallId and sessionId
-    // 2. Send a cancellation signal to the MCP server
-    // 3. Clean up any resources
-    // 4. Return the cancellation status
+    console.log(`Processing tool cancellation request for: ${cancelRequest.toolCallId}`);
+    
+    const toolExecutionService = getToolExecutionService();
+    
+    // Cancel the tool execution using the service
+    const result = await toolExecutionService.cancelToolExecution(
+      cancelRequest.toolCallId,
+      cancelRequest.sessionId
+    );
+
+    console.log(`Tool cancellation processed for: ${cancelRequest.toolCallId}`);
 
     const response: CancelToolResponse = {
-      success: true,
-      message: `Tool execution ${cancelRequest.toolCallId} has been cancelled successfully`,
+      success: result.success,
+      message: result.message,
+      error: result.success ? undefined : result.message,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { status: result.success ? 200 : 500 });
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Tool cancellation failed:`, errorMessage);
+
     const errorResponse: CancelToolResponse = {
       success: false,
       message: '',
-      error: `Failed to cancel tool execution: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `Failed to cancel tool execution: ${errorMessage}`,
     };
 
     return NextResponse.json(errorResponse, { status: 500 });
