@@ -82,6 +82,12 @@ export interface ChatRequest {
   sessionId: string;
   provider: LLMProvider;
   model: string;
+  apiKey?: string;
+  baseUrl?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  availableTools?: MCPTool[];
 }
 
 export interface ChatResponse {

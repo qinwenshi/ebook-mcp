@@ -112,14 +112,14 @@
     - _Requirements: 1.5, 9.1, 9.2, 9.3_
 
 - [ ] 8. Build LLM integration service
-  - [ ] 8.1 Create LLM service abstraction
+  - [x] 8.1 Create LLM service abstraction
     - Implement LLMService with support for OpenAI, DeepSeek, and OpenRouter
     - Create unified interface for different providers
     - Add API key management and request formatting
     - Implement retry logic and error handling
     - _Requirements: 2.1, 2.4, 2.5_
 
-  - [ ] 8.2 Implement chat processing logic
+  - [x] 8.2 Implement chat processing logic
     - Create processQuery function for handling chat requests
     - Add system prompt construction and message history management
     - Implement tool call detection and response formatting

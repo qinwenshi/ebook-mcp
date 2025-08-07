@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withCors } from '@/lib/cors';
-import { handleAsyncRoute } from '@/lib/errors';
+import { handleAsyncRoute, ValidationError } from '@/lib/errors';
 import { validateChatRequest } from '@/lib/validation';
+import { ensureInitialized } from '@/lib/initialization';
 import { ChatRequest, ChatResponse } from '@/types';
+import { createLLMService, getDefaultProviderConfig } from '@/services/LLMService';
+import { getSessionManager } from '@/services/SessionManager';
+import { createChatProcessor } from '@/services/ChatProcessor';
 
 async function chatHandler(request: Request): Promise<NextResponse> {
   if (request.method !== 'POST') {
@@ -12,17 +16,78 @@ async function chatHandler(request: Request): Promise<NextResponse> {
     );
   }
 
+  // Ensure backend is initialized
+  await ensureInitialized();
+
   const body = await request.json();
   const chatRequest = validateChatRequest(body);
 
-  // TODO: Implement actual LLM integration
-  // For now, return a mock response
-  const mockResponse: ChatResponse = {
-    reply: `Mock response for session ${chatRequest.sessionId} using ${chatRequest.provider}/${chatRequest.model}`,
-    sessionId: chatRequest.sessionId,
-  };
+  // Extract additional parameters from request body
+  const { 
+    apiKey, 
+    baseUrl, 
+    systemPrompt, 
+    temperature, 
+    maxTokens,
+    availableTools 
+  } = body;
 
-  return NextResponse.json(mockResponse);
+  // Validate API key is provided
+  if (!apiKey || typeof apiKey !== 'string') {
+    throw new ValidationError('API key is required for chat requests');
+  }
+
+  try {
+    // Create LLM service with user's configuration
+    const defaultConfig = getDefaultProviderConfig(chatRequest.provider);
+    const llmService = createLLMService({
+      provider: chatRequest.provider,
+      apiKey,
+      baseUrl: baseUrl || defaultConfig.baseUrl,
+      model: chatRequest.model,
+      maxRetries: defaultConfig.maxRetries,
+      retryDelay: defaultConfig.retryDelay,
+      timeout: defaultConfig.timeout,
+    });
+
+    // Get session manager
+    const sessionManager = getSessionManager();
+
+    // Create chat processor
+    const chatProcessor = createChatProcessor(llmService, sessionManager);
+
+    // Process the chat query
+    const response = await chatProcessor.processQuery({
+      messages: chatRequest.messages,
+      sessionId: chatRequest.sessionId,
+      provider: chatRequest.provider,
+      model: chatRequest.model,
+      availableTools: availableTools || [],
+      systemPrompt,
+      temperature,
+      maxTokens,
+    });
+
+    const chatResponse: ChatResponse = {
+      reply: response.reply,
+      toolCalls: response.toolCalls,
+      sessionId: response.sessionId,
+    };
+
+    return NextResponse.json(chatResponse);
+  } catch (error) {
+    console.error('Chat processing error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const chatResponse: ChatResponse = {
+      sessionId: chatRequest.sessionId,
+      error: errorMessage,
+    };
+
+    return NextResponse.json(chatResponse, { 
+      status: error instanceof ValidationError ? 400 : 500 
+    });
+  }
 }
 
 export const POST = withCors(handleAsyncRoute(chatHandler));
