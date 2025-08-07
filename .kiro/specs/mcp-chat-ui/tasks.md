@@ -54,21 +54,21 @@
     - _Requirements: 1.5, 5.1, 9.1_
 
 - [ ] 5. Build settings and configuration interface
-  - [ ] 5.1 Create LLM provider configuration
+  - [x] 5.1 Create LLM provider configuration
     - Build LLMProviderConfig component with provider selection (OpenAI, DeepSeek, OpenRouter)
     - Implement secure API key input and storage
     - Add model selection with tool calling support indication
     - Create connection testing functionality
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ] 5.2 Implement MCP server configuration
+  - [x] 5.2 Implement MCP server configuration
     - Create MCPServerConfig component with JSON configuration editor
     - Add server status indicators and connection management
     - Implement add/remove/edit server configurations
     - Create server connection testing and tool listing
     - _Requirements: 3.1, 3.2, 3.5, 3.6_
 
-  - [ ] 5.3 Build preferences and language settings
+  - [x] 5.3 Build preferences and language settings
     - Create user preferences interface with theme and language selection
     - Implement language switching with immediate UI updates
     - Add other application preferences (auto-scroll, sound)

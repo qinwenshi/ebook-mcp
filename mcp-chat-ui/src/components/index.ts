@@ -5,6 +5,9 @@ export { default as ServerList } from './ServerList';
 export { default as Sidebar } from './Sidebar';
 export { default as ChatHistoryItem } from './ChatHistoryItem';
 export { default as NewChatModal } from './NewChatModal';
+export { default as LLMProviderConfig } from './LLMProviderConfig';
+export { default as MCPServerConfig } from './MCPServerConfig';
+export { default as PreferencesConfig } from './PreferencesConfig';
 export { LanguageSelector } from './LanguageSelector';
 export { ErrorBoundary } from './ErrorBoundary';
 

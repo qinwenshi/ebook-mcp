@@ -5,7 +5,7 @@ import { Button, Input, Modal } from './ui';
 import { LanguageSelector } from './LanguageSelector';
 import ChatHistoryItem from './ChatHistoryItem';
 import NewChatModal from './NewChatModal';
-import { useChatSessions, type ChatSession } from '../hooks/useChatSessions';
+import { useChatSessions } from '../hooks/useChatSessions';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,7 +16,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
   onClose,
   currentSessionId,
   onSessionSelect,
@@ -32,7 +31,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [deleteSessionId, setDeleteSessionId] = useState('');
 
   const {
-    chatSessions,
     createSession,
     deleteSession,
     renameSession,

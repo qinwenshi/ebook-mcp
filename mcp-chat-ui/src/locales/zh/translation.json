@@ -102,7 +102,18 @@
     "toolCount_plural": "{{count}} 个可用工具",
     "resetSettings": "重置设置",
     "exportSettings": "导出设置",
-    "importSettings": "导入设置"
+    "importSettings": "导入设置",
+    "addProvider": "添加提供商",
+    "noProvidersConfigured": "尚未配置 LLM 提供商。",
+    "addProviderToStart": "添加提供商以开始使用聊天界面。",
+    "notConfigured": "未配置",
+    "availableModels": "可用模型",
+    "disable": "禁用",
+    "enable": "启用",
+    "noServersConfigured": "尚未配置 MCP 服务器。",
+    "importMCPConfig": "导入 MCP 配置",
+    "importMCPConfigDescription": "从 MCP JSON 配置导入服务器",
+    "mcpConfigurationJSON": "MCP 配置 JSON"
   },
   "errors": {
     "connectionFailed": "连接服务失败",

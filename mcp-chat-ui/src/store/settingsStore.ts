@@ -6,7 +6,8 @@ import type {
   MCPServerConfig, 
   UserPreferences,
   Theme,
-  Language 
+  Language,
+  LLMProvider
 } from '../types';
 
 interface SettingsStore {
@@ -213,18 +214,13 @@ export const useSettingsStore = create<SettingsStore>()(
       
       testLLMConnection: async (id) => {
         const provider = get().llmProviders.find(p => p.id === id);
-        if (!provider) return false;
+        if (!provider) throw new Error('Provider not found');
         
-        try {
-          // Mock connection test - in real implementation, make actual API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Simulate success/failure based on API key presence
-          return provider.apiKey.length > 0;
-        } catch (error) {
-          console.error('LLM connection test failed:', error);
-          return false;
+        const result = await testLLMProviderConnection(provider);
+        if (!result.success && result.error) {
+          throw new Error(result.error);
         }
+        return result.success;
       },
       
       // MCP Server actions
@@ -302,15 +298,8 @@ export const useSettingsStore = create<SettingsStore>()(
           preferences: { ...state.preferences, language },
         }));
         
-        // Update i18n language
-        // Note: This will be handled by the i18n initialization
-        // The actual language change will be managed by the i18n system
-        try {
-          // In a real implementation, this would trigger i18n language change
-          console.debug('Language changed to:', language);
-        } catch (error) {
-          console.warn('Failed to update i18n language:', error);
-        }
+        // Update i18n language immediately
+        updateI18nLanguage(language);
         
         get().saveSettings();
       },
@@ -320,37 +309,8 @@ export const useSettingsStore = create<SettingsStore>()(
           preferences: { ...state.preferences, theme },
         }));
         
-        // Apply theme to document
-        const applyTheme = () => {
-          const root = document.documentElement;
-          if (theme === 'dark') {
-            root.classList.add('dark');
-          } else if (theme === 'light') {
-            root.classList.remove('dark');
-          } else {
-            // System theme
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-              root.classList.add('dark');
-            } else {
-              root.classList.remove('dark');
-            }
-          }
-        };
-
         // Apply theme immediately
-        applyTheme();
-
-        // Listen for system theme changes if using system theme
-        if (theme === 'system') {
-          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          const handleSystemThemeChange = () => applyTheme();
-          
-          // Remove existing listener if any
-          mediaQuery.removeEventListener('change', handleSystemThemeChange);
-          // Add new listener
-          mediaQuery.addEventListener('change', handleSystemThemeChange);
-        }
+        applyThemeToDocument(theme);
         
         get().saveSettings();
       },
@@ -525,8 +485,134 @@ export const importMCPServersFromJSON = (mcpConfigJson: string): MCPServerConfig
   }
 };
 
+// Default base URLs for each provider (moved here to be accessible)
+const TEST_DEFAULT_BASE_URLS: Record<LLMProvider, string> = {
+  openai: 'https://api.openai.com/v1',
+  deepseek: 'https://api.deepseek.com/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
+};
+
+// Test LLM provider connection
+export const testLLMProviderConnection = async (provider: LLMProviderConfig): Promise<{ success: boolean; error?: string }> => {
+  if (!provider.apiKey) {
+    return { success: false, error: 'API key is required' };
+  }
+
+  const baseUrl = provider.baseUrl || TEST_DEFAULT_BASE_URLS[provider.name];
+  
+  try {
+    // Create a minimal test request based on provider type
+    const testPayload = {
+      model: provider.models[0]?.id || getDefaultModelForProvider(provider.name),
+      messages: [{ role: 'user', content: 'Hello' }],
+      max_tokens: 5,
+      temperature: 0,
+    };
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Set authorization header based on provider
+    if (provider.name === 'openai' || provider.name === 'deepseek') {
+      headers['Authorization'] = `Bearer ${provider.apiKey}`;
+    } else if (provider.name === 'openrouter') {
+      headers['Authorization'] = `Bearer ${provider.apiKey}`;
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'MCP Chat UI';
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(testPayload),
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+      return { success: false, error: errorMessage };
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
+    return { success: false, error: errorMessage };
+  }
+};
+
+// Helper function to get default model for provider
+const getDefaultModelForProvider = (provider: LLMProvider): string => {
+  const defaultModels: Record<LLMProvider, string> = {
+    openai: 'gpt-3.5-turbo',
+    deepseek: 'deepseek-chat',
+    openrouter: 'openai/gpt-3.5-turbo',
+  };
+  return defaultModels[provider];
+};
+
+// Theme application utility
+let systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+const applyThemeToDocument = (theme: Theme) => {
+  const root = document.documentElement;
+  
+  // Remove existing system theme listener
+  if (systemThemeListener) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.removeEventListener('change', systemThemeListener);
+    systemThemeListener = null;
+  }
+  
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else if (theme === 'light') {
+    root.classList.remove('dark');
+  } else {
+    // System theme
+    const applySystemTheme = () => {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+    
+    // Apply system theme immediately
+    applySystemTheme();
+    
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    systemThemeListener = () => applySystemTheme();
+    mediaQuery.addEventListener('change', systemThemeListener);
+  }
+};
+
+// Language update utility
+const updateI18nLanguage = async (language: Language) => {
+  try {
+    // Dynamically import i18n to avoid circular dependencies
+    const { default: i18n } = await import('../i18n');
+    await i18n.changeLanguage(language);
+    
+    // Also update localStorage for i18next language detector
+    localStorage.setItem('i18nextLng', language);
+  } catch (error) {
+    console.warn('Failed to update i18n language:', error);
+  }
+};
+
 // Initialize settings on app start
 export const initializeSettings = async () => {
   const store = useSettingsStore.getState();
   await store.loadSettings();
+  
+  // Apply the current theme after loading settings
+  const currentTheme = store.preferences.theme;
+  applyThemeToDocument(currentTheme);
+  
+  // Apply the current language after loading settings
+  const currentLanguage = store.preferences.language;
+  await updateI18nLanguage(currentLanguage);
 };

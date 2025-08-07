@@ -102,7 +102,18 @@
     "toolCount_plural": "{{count}} tools available",
     "resetSettings": "Reset Settings",
     "exportSettings": "Export Settings",
-    "importSettings": "Import Settings"
+    "importSettings": "Import Settings",
+    "addProvider": "Add Provider",
+    "noProvidersConfigured": "No LLM providers configured yet.",
+    "addProviderToStart": "Add a provider to start using the chat interface.",
+    "notConfigured": "Not configured",
+    "availableModels": "Available Models",
+    "disable": "Disable",
+    "enable": "Enable",
+    "noServersConfigured": "No MCP servers configured yet.",
+    "importMCPConfig": "Import MCP Configuration",
+    "importMCPConfigDescription": "Import servers from MCP JSON configuration",
+    "mcpConfigurationJSON": "MCP Configuration JSON"
   },
   "errors": {
     "connectionFailed": "Failed to connect to the service",
