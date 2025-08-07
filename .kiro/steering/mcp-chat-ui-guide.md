@@ -1,5 +1,6 @@
 ---
-Only affects files under mcp-chat-ui/src
+inclusion: fileMatch
+fileMatchPattern: "components/**/*.tsx"
 ---
 
 # mcp-chat-ui-guide.md
