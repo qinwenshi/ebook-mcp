@@ -1,53 +1,15 @@
 import { NextResponse } from 'next/server';
-import { withCors } from '@/lib/cors';
-import { handleAsyncRoute, ValidationError } from '@/lib/errors';
+import { withSecurity } from '@/lib/security';
+import { ValidationError } from '@/lib/errors';
 import { validateSettings } from '@/lib/validation';
-import { Settings } from '@/types';
-
-// Mock settings storage - in production, this would be a database
-let mockSettings: Settings = {
-  llmProviders: [
-    {
-      id: 'openai-1',
-      name: 'openai',
-      apiKey: '',
-      baseUrl: 'https://api.openai.com/v1',
-      models: [
-        {
-          id: 'gpt-4',
-          name: 'GPT-4',
-          supportsToolCalling: true,
-          maxTokens: 8192,
-        },
-        {
-          id: 'gpt-3.5-turbo',
-          name: 'GPT-3.5 Turbo',
-          supportsToolCalling: true,
-          maxTokens: 4096,
-        },
-      ],
-    },
-  ],
-  mcpServers: [
-    {
-      id: 'filesystem-1',
-      name: 'filesystem',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
-      enabled: false,
-      status: 'disconnected',
-    },
-  ],
-  preferences: {
-    theme: 'system',
-    language: 'en',
-    autoScroll: true,
-    soundEnabled: false,
-  },
-};
+import { getSecureSettingsManager } from '@/services/SecureSettingsManager';
 
 async function getSettingsHandler(request: Request): Promise<NextResponse> {
-  return NextResponse.json(mockSettings);
+  const settingsManager = getSecureSettingsManager();
+  await settingsManager.initialize();
+  
+  const settings = await settingsManager.getSettings();
+  return NextResponse.json(settings);
 }
 
 async function updateSettingsHandler(request: Request): Promise<NextResponse> {
@@ -59,14 +21,12 @@ async function updateSettingsHandler(request: Request): Promise<NextResponse> {
   }
   
   const validatedSettings = validateSettings(body);
-
-  // Merge with existing settings
-  mockSettings = {
-    ...mockSettings,
-    ...validatedSettings,
-  };
-
-  return NextResponse.json(mockSettings);
+  
+  const settingsManager = getSecureSettingsManager();
+  await settingsManager.initialize();
+  
+  const updatedSettings = await settingsManager.updateSettings(validatedSettings);
+  return NextResponse.json(updatedSettings);
 }
 
 async function settingsHandler(request: Request): Promise<NextResponse> {
@@ -84,7 +44,7 @@ async function settingsHandler(request: Request): Promise<NextResponse> {
   }
 }
 
-export const GET = withCors(handleAsyncRoute(getSettingsHandler));
-export const POST = withCors(handleAsyncRoute(updateSettingsHandler));
-export const PUT = withCors(handleAsyncRoute(updateSettingsHandler));
-export const OPTIONS = withCors(async () => new NextResponse(null, { status: 200 }));
+export const GET = withSecurity(getSettingsHandler);
+export const POST = withSecurity(updateSettingsHandler);
+export const PUT = withSecurity(updateSettingsHandler);
+export const OPTIONS = withSecurity(async () => new NextResponse(null, { status: 200 }));

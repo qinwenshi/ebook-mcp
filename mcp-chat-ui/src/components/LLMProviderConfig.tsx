@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { useSettingsStore } from '@/store/settingsStore';
+import { getApiKeyStatus, truncateUrl } from '@/utils';
 import type { LLMProvider, LLMProviderConfig as LLMProviderConfigType, ModelInfo } from '@/types';
 
 interface LLMProviderConfigProps {
@@ -60,6 +61,8 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [testingConnections, setTestingConnections] = useState<Set<string>>(new Set());
   const [connectionResults, setConnectionResults] = useState<Record<string, { success: boolean; error?: string; timestamp: number }>>({});
+  
+  // Note: API key testing is now handled by the backend
 
   // Reset form when adding new provider
   const handleAddProvider = () => {
@@ -79,7 +82,8 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
   const handleEditProvider = (provider: LLMProviderConfigType) => {
     setFormData({
       name: provider.name,
-      apiKey: provider.apiKey,
+      // If API key is masked, show empty field for user to enter new key
+      apiKey: provider.apiKey && provider.apiKey.includes('*') ? '' : provider.apiKey,
       baseUrl: provider.baseUrl || DEFAULT_BASE_URLS[provider.name],
       models: provider.models.length > 0 ? provider.models : DEFAULT_MODELS[provider.name],
       enabled: provider.enabled,
@@ -107,7 +111,9 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.apiKey.trim()) {
+    // For editing existing providers, API key is optional (user can keep existing one)
+    // For new providers, API key is required
+    if (!editingProviderId && !formData.apiKey.trim()) {
       errors.apiKey = t('errors.invalidApiKey');
     }
 
@@ -133,43 +139,69 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
   const handleSaveProvider = () => {
     if (!validateForm()) return;
 
-    const providerData = {
+    const providerData: Partial<LLMProviderConfigType> = {
       name: formData.name,
-      apiKey: formData.apiKey.trim(),
       baseUrl: formData.baseUrl.trim() || DEFAULT_BASE_URLS[formData.name],
       models: formData.models,
       enabled: formData.enabled,
     };
 
+    // Only include API key if it's provided (not empty)
+    if (formData.apiKey.trim()) {
+      providerData.apiKey = formData.apiKey.trim();
+    }
+
     if (editingProviderId) {
       updateLLMProvider(editingProviderId, providerData);
     } else {
-      addLLMProvider(providerData);
+      // For new providers, API key is required
+      if (!formData.apiKey.trim()) {
+        setFormErrors({ apiKey: t('errors.invalidApiKey') });
+        return;
+      }
+      addLLMProvider({
+        ...providerData,
+        apiKey: formData.apiKey.trim(),
+      } as Omit<LLMProviderConfigType, 'id'>);
     }
 
     handleCancelForm();
   };
 
-  // Test connection
+  // Test connection - use backend API for testing
   const handleTestConnection = async (providerId: string) => {
     setTestingConnections(prev => new Set(prev).add(providerId));
     
     try {
-      const success = await testLLMConnection(providerId);
-      setConnectionResults(prev => ({
-        ...prev,
-        [providerId]: {
-          success,
-          timestamp: Date.now(),
-        }
-      }));
+      // Call backend API to test connection using stored API key
+      const response = await fetch('/api/settings/test-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ providerId }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setConnectionResults(prev => ({
+          ...prev,
+          [providerId]: {
+            success: result.success,
+            error: result.error,
+            timestamp: Date.now(),
+          }
+        }));
+      } else {
+        throw new Error('Failed to test connection');
+      }
     } catch (error) {
       console.error('Connection test failed:', error);
       setConnectionResults(prev => ({
         ...prev,
         [providerId]: {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : 'Connection test failed',
           timestamp: Date.now(),
         }
       }));
@@ -181,6 +213,8 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
       });
     }
   };
+
+  // Note: API key input for testing is no longer needed
 
   // Update form data when provider selection changes
   useEffect(() => {
@@ -244,10 +278,15 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
                       type="password"
                       value={formData.apiKey}
                       onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
-                      placeholder={t('settings.apiKeyPlaceholder')}
+                      placeholder={editingProviderId ? 
+                        t('settings.apiKeyPlaceholderEdit', 'Leave empty to keep existing API key') : 
+                        t('settings.apiKeyPlaceholder')}
                       error={formErrors.apiKey}
+                      helperText={editingProviderId ? 
+                        t('settings.apiKeyHelperEdit', 'Enter a new API key to update, or leave empty to keep the current one') : 
+                        undefined}
                       fullWidth
-                      required
+                      required={!editingProviderId}
                     />
                   </div>
 
@@ -317,10 +356,29 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
                           </span>
                         </div>
                         
-                        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                          <p>API Key: {provider.apiKey ? '••••••••' : t('settings.notConfigured', 'Not configured')}</p>
+                        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-medium min-w-0 flex-shrink-0">API Key:</span>
+                            {(() => {
+                              const keyStatus = getApiKeyStatus(provider.apiKey);
+                              return keyStatus.configured ? (
+                                <code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono text-gray-800 dark:text-gray-200">
+                                  {keyStatus.masked ? '••••' : 'Configured'}
+                                </code>
+                              ) : (
+                                <span className="text-xs text-gray-500">
+                                  {t('settings.notConfigured', 'Not configured')}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           {provider.baseUrl && (
-                            <p>Base URL: {provider.baseUrl}</p>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs font-medium min-w-0 flex-shrink-0">Base URL:</span>
+                              <code className="text-xs text-blue-600 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-900/20 px-1 rounded">
+                                {truncateUrl(provider.baseUrl, 35)}
+                              </code>
+                            </div>
                           )}
                           
                           {/* Connection Test Result */}
@@ -399,7 +457,7 @@ const LLMProviderConfig: React.FC<LLMProviderConfigProps> = ({ className = '' })
                           size="sm"
                           onClick={() => handleTestConnection(provider.id)}
                           loading={testingConnections.has(provider.id)}
-                          disabled={!provider.apiKey || !provider.enabled}
+                          disabled={!provider.enabled}
                         >
                           {t('settings.testConnection')}
                         </Button>

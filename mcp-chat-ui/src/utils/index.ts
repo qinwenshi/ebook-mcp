@@ -18,3 +18,9 @@ export {
   type LanguageKeys,
   type ThemeKeys,
 } from './i18n';
+
+export {
+  formatApiKeyForDisplay,
+  getApiKeyStatus,
+  truncateUrl,
+} from './apiKeyUtils';

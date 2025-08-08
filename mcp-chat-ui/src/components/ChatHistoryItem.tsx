@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui';
-import { type ChatSession } from '../hooks/useChatSessions';
+import { type ChatSession } from '../types';
 
 interface ChatHistoryItemProps {
   session: ChatSession;
@@ -20,9 +20,17 @@ const ChatHistoryItem: React.FC<ChatHistoryItemProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string | number) => {
+    // Ensure we have a valid Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      return t('common.unknown', 'Unknown');
+    }
+    
     const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const diffInDays = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffInDays === 0) {
       return t('common.today', 'Today');
@@ -31,7 +39,7 @@ const ChatHistoryItem: React.FC<ChatHistoryItemProps> = ({
     } else if (diffInDays < 7) {
       return t('common.daysAgo', '{{count}} days ago', { count: diffInDays });
     } else {
-      return date.toLocaleDateString();
+      return dateObj.toLocaleDateString();
     }
   };
 
@@ -49,7 +57,7 @@ const ChatHistoryItem: React.FC<ChatHistoryItemProps> = ({
           {session.title}
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {formatDate(session.updatedAt)} • {t('chat.messageCount', '{{count}} message', { count: session.messageCount })}
+          {formatDate(session.updatedAt)} • {t('chat.messageCount', '{{count}} message', { count: session.messages.length })}
         </div>
         <div className="text-xs text-gray-400 dark:text-gray-500">
           {t(`providers.${session.provider}`, session.provider)} • {session.model}

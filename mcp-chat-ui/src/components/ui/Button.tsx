@@ -7,6 +7,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  'aria-describedby'?: string;
+  'aria-expanded'?: boolean;
+  'aria-haspopup'?: boolean | 'false' | 'true' | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+  'aria-pressed'?: boolean;
+  'aria-controls'?: string;
+  'aria-owns'?: string;
+  tooltip?: string;
+  shortcut?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -21,6 +29,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       fullWidth = false,
       disabled,
       className = '',
+      tooltip,
+      shortcut,
       ...props
     },
     ref
@@ -30,6 +40,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       'focus:outline-none focus:ring-2 focus:ring-offset-2',
       'transition-colors duration-200',
       'disabled:opacity-50 disabled:cursor-not-allowed',
+      'relative', // For loading state positioning
       fullWidth ? 'w-full' : '',
     ].join(' ');
 
@@ -71,28 +82,49 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       </svg>
     );
 
-    return (
+    const buttonElement = (
       <button
         ref={ref}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || loading}
         aria-disabled={disabled || loading}
+        aria-busy={loading}
+        title={tooltip}
         {...props}
       >
         {loading ? (
           <>
             <LoadingSpinner />
-            <span className="ml-2">{children}</span>
+            <span className="ml-2" aria-live="polite">
+              {children}
+            </span>
           </>
         ) : (
           <>
-            {leftIcon && <span className="mr-2">{leftIcon}</span>}
-            {children}
-            {rightIcon && <span className="ml-2">{rightIcon}</span>}
+            {leftIcon && (
+              <span className="mr-2" aria-hidden="true">
+                {leftIcon}
+              </span>
+            )}
+            <span>{children}</span>
+            {shortcut && (
+              <span className="ml-2 text-xs opacity-70" aria-label={`Keyboard shortcut: ${shortcut}`}>
+                <kbd className="px-1 py-0.5 bg-black/10 dark:bg-white/10 rounded text-xs">
+                  {shortcut}
+                </kbd>
+              </span>
+            )}
+            {rightIcon && (
+              <span className="ml-2" aria-hidden="true">
+                {rightIcon}
+              </span>
+            )}
           </>
         )}
       </button>
     );
+
+    return buttonElement;
   }
 );
 

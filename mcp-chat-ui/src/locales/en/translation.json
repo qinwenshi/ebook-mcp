@@ -18,7 +18,9 @@
     "openMenu": "Open menu",
     "today": "Today",
     "yesterday": "Yesterday",
-    "daysAgo": "{{count}} days ago"
+    "daysAgo": "{{count}} days ago",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "app": {
     "title": "MCP Chat UI",
@@ -26,6 +28,7 @@
   },
   "chat": {
     "sendMessage": "Send message",
+    "sendMessageTooltip": "Send message (Enter)",
     "newChat": "New Chat",
     "chatHistory": "Chat History",
     "noHistory": "No chat history yet",
@@ -33,6 +36,9 @@
     "runTool": "Run Tool",
     "cancelTool": "Cancel Tool",
     "messagePlaceholder": "Type your message here...",
+    "noSession": "No Chat Session",
+    "createNewChat": "Create a new chat to start a conversation with an AI assistant.",
+    "configureProviderFirst": "Configure an LLM provider in settings first",
     "noMessages": "No messages yet. Start a conversation!",
     "toolExecuting": "Tool is executing...",
     "toolCompleted": "Tool execution completed",
@@ -60,7 +66,13 @@
     "newChatDescription": "Select an LLM provider and model to start a new conversation.",
     "selectedConfiguration": "Selected Configuration:",
     "provider": "Provider",
-    "model": "Model"
+    "model": "Model",
+    "chatInterface": "Chat interface",
+    "messagesSection": "Chat messages",
+    "inputSection": "Message input",
+    "messageInputLabel": "Type your message",
+    "messageSent": "Message sent",
+    "toolExecuted": "Tool executed successfully"
   },
   "settings": {
     "title": "Settings",
@@ -125,14 +137,24 @@
     "unknownError": "An unknown error occurred",
     "fileNotFound": "File not found",
     "invalidConfiguration": "Invalid configuration",
-    "serverUnavailable": "Server is unavailable"
+    "serverUnavailable": "Server is unavailable",
+    "noActiveSession": "No active chat session. Please create a new chat.",
+    "noValidProvider": "No valid LLM provider configured. Please check your settings.",
+    "error": "Error",
+    "messageSendFailed": "Failed to send message"
+  },
+  "warnings": {
+    "configurationRequired": "Configuration Required",
+    "noValidProvider": "Please configure a valid LLM provider in settings to start chatting."
   },
   "navigation": {
     "home": "Home",
     "chat": "Chat",
     "settings": "Settings",
     "history": "History",
-    "about": "About"
+    "about": "About",
+    "sidebar": "Sidebar navigation",
+    "mainContent": "Main content"
   },
   "providers": {
     "openai": "OpenAI",
@@ -147,5 +169,43 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "accessibility": {
+    "title": "Accessibility",
+    "description": "Configure accessibility features to improve your experience",
+    "visual": "Visual Accessibility",
+    "motion": "Motion and Animation",
+    "interaction": "Interaction",
+    "systemInfo": "System Preferences",
+    "info": "Accessibility Information",
+    "highContrast": "High Contrast Mode",
+    "highContrastDescription": "Increase contrast for better visibility",
+    "highContrastSystemEnabled": "System high contrast is enabled",
+    "largeText": "Large Text",
+    "largeTextDescription": "Increase text size throughout the interface",
+    "focusVisible": "Enhanced Focus Indicators",
+    "focusVisibleDescription": "Show clear focus indicators for keyboard navigation",
+    "reducedMotion": "Reduce Motion",
+    "reducedMotionDescription": "Minimize animations and transitions",
+    "reducedMotionSystemEnabled": "System reduced motion is enabled",
+    "keyboardNavigation": "Enhanced Keyboard Navigation",
+    "keyboardNavigationDescription": "Improve keyboard navigation with arrow keys and shortcuts",
+    "screenReaderAnnouncements": "Screen Reader Announcements",
+    "screenReaderAnnouncementsDescription": "Announce important changes and updates to screen readers",
+    "systemHighContrast": "System High Contrast",
+    "systemReducedMotion": "System Reduced Motion",
+    "wcagCompliance": "WCAG 2.1 AA Compliance",
+    "wcagDescription": "This application follows Web Content Accessibility Guidelines (WCAG) 2.1 AA standards to ensure accessibility for all users.",
+    "keyboardSupport": "Full keyboard navigation support",
+    "screenReaderSupport": "Screen reader compatibility",
+    "colorContrastSupport": "Sufficient color contrast ratios",
+    "focusManagement": "Proper focus management",
+    "skipToMain": "Skip to main content",
+    "skipToNavigation": "Skip to navigation",
+    "skipToMessageInput": "Skip to message input",
+    "openInNewWindow": "Opens in new window",
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success"
   }
 }

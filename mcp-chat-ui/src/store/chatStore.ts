@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ChatSession, Message, ToolCall, LLMProvider } from '../types';
+import type { ChatSession, Message, ToolCall, LLMProvider, ChatRequest, RunToolRequest } from '../types';
+import { chatApi } from '../services/apiClient';
+import { useSettingsStore } from './settingsStore';
 
 interface ChatStore {
   // Current session state
@@ -11,6 +13,10 @@ interface ChatStore {
   
   // Chat history
   sessions: ChatSession[];
+  isLoadingSessions: boolean;
+  
+  // Error state
+  error: string | null;
   
   // Actions
   sendMessage: (content: string) => Promise<void>;
@@ -30,11 +36,13 @@ interface ChatStore {
   
   // Session persistence
   saveSession: () => void;
-  loadSessions: () => void;
+  loadSessions: () => Promise<void>;
+  initializeStore: () => Promise<void>;
   
   // Tool call management
   setPendingToolCall: (toolCall: ToolCall | null) => void;
   setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
   
   // Utility functions
   generateSessionTitle: (messages: Message[]) => string;
@@ -70,44 +78,116 @@ export const useChatStore = create<ChatStore>()(
       isLoading: false,
       pendingToolCall: null,
       sessions: [],
+      isLoadingSessions: false,
+      error: null,
       
       // Actions
       sendMessage: async (content: string) => {
+        console.log('🚀 sendMessage called with:', content);
         const { currentSession, addMessage, saveSession } = get();
         
         if (!currentSession) {
+          console.error('❌ No active session');
           throw new Error('No active session');
         }
         
-        // Add user message
+        console.log('📝 Current session:', currentSession);
+        
+        // Add user message immediately
         const userMessage: Omit<Message, 'id' | 'timestamp'> = {
           role: 'user',
           content: content.trim(),
         };
         
+        console.log('➕ Adding user message:', userMessage);
         addMessage(userMessage);
-        set({ isLoading: true });
+        set({ isLoading: true, error: null });
         
         try {
-          // TODO: This will be implemented when we connect to the backend API
-          // For now, we just add the message and save the session
-          saveSession();
+          // Get settings for API configuration
+          console.log('🔧 Getting settings...');
+          const settingsStore = useSettingsStore.getState();
+          console.log('⚙️ Settings store:', settingsStore);
           
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const provider = settingsStore.llmProviders.find(p => 
+            p.name === currentSession.provider && p.enabled
+          );
           
-          // Add a placeholder assistant response
-          const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
-            role: 'assistant',
-            content: 'This is a placeholder response. Backend integration will be implemented in a later task.',
+          console.log('🔍 Found provider:', provider);
+          
+          if (!provider) {
+            console.error('❌ No valid provider found');
+            throw new Error(`No valid ${currentSession.provider} provider configuration found. Please check your settings.`);
+          }
+          
+          // Prepare chat request with current messages (including the new user message)
+          // Note: API key is now handled securely by the backend
+          const currentMessages = get().messages;
+          const chatRequest: ChatRequest = {
+            messages: currentMessages,
+            sessionId: currentSession.id,
+            provider: currentSession.provider,
+            model: currentSession.model,
+            // API key is retrieved securely from backend storage
+            baseUrl: provider.baseUrl,
+            // Backend will populate available tools from enabled MCP servers
           };
           
-          addMessage(assistantMessage);
+          console.log('📤 Sending chat request:', {
+            ...chatRequest,
+            // Note: API key is now handled securely by the backend
+          });
+          
+          // Send chat request to backend
+          const response = await chatApi.sendMessage(chatRequest);
+          
+          if (response.error) {
+            throw new Error(response.error);
+          }
+          
+          // Handle tool calls if present
+          if (response.toolCalls && response.toolCalls.length > 0) {
+            // Add assistant message with tool calls
+            const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
+              role: 'assistant',
+              content: response.reply || 'I need to use a tool to help with your request.',
+              toolCalls: response.toolCalls,
+            };
+            
+            addMessage(assistantMessage);
+            
+            // Set the first tool call as pending (handle one at a time)
+            set({ pendingToolCall: response.toolCalls[0] });
+          } else if (response.reply) {
+            // Add regular assistant response
+            const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
+              role: 'assistant',
+              content: response.reply,
+            };
+            
+            addMessage(assistantMessage);
+          }
+          
           saveSession();
           
         } catch (error) {
           console.error('Error sending message:', error);
-          // TODO: Add proper error handling
+          
+          // Set error state for UI feedback
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          set({ error: errorMessage });
+          
+          // Add error message to chat for user visibility
+          const errorChatMessage: Omit<Message, 'id' | 'timestamp'> = {
+            role: 'assistant',
+            content: `I encountered an error: ${errorMessage}. Please try again or check your settings.`,
+          };
+          
+          addMessage(errorChatMessage);
+          saveSession();
+          
+          // Re-throw error for component-level handling
+          throw error;
         } finally {
           set({ isLoading: false });
         }
@@ -120,32 +200,62 @@ export const useChatStore = create<ChatStore>()(
           throw new Error('No active session');
         }
         
-        set({ isLoading: true, pendingToolCall: null });
+        set({ isLoading: true, pendingToolCall: null, error: null });
         
         try {
-          // TODO: This will be implemented when we connect to the backend API
-          // For now, we just add a placeholder tool result
+          // Prepare tool execution request with current messages
+          const runToolRequest: RunToolRequest = {
+            toolCall,
+            sessionId: currentSession.id,
+            messages: get().messages,
+          };
           
+          // Execute tool via backend API
+          const response = await chatApi.runTool(runToolRequest);
+          
+          if (response.error) {
+            throw new Error(response.error);
+          }
+          
+          // Add tool result message
           const toolMessage: Omit<Message, 'id' | 'timestamp'> = {
             role: 'tool',
-            content: `Tool "${toolCall.function.name}" executed successfully. (Placeholder result)`,
+            content: response.result,
             toolCallId: toolCall.id,
           };
           
           addMessage(toolMessage);
           
           // Add assistant response to tool result
-          const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
-            role: 'assistant',
-            content: 'Tool execution completed. Backend integration will be implemented in a later task.',
-          };
+          if (response.reply) {
+            const assistantMessage: Omit<Message, 'id' | 'timestamp'> = {
+              role: 'assistant',
+              content: response.reply,
+            };
+            
+            addMessage(assistantMessage);
+          }
           
-          addMessage(assistantMessage);
           saveSession();
           
         } catch (error) {
           console.error('Error executing tool:', error);
-          // TODO: Add proper error handling
+          
+          // Set error state for UI feedback
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          set({ error: errorMessage });
+          
+          // Add error message to chat for user visibility
+          const errorChatMessage: Omit<Message, 'id' | 'timestamp'> = {
+            role: 'assistant',
+            content: `Tool execution failed: ${errorMessage}. Please try again.`,
+          };
+          
+          addMessage(errorChatMessage);
+          saveSession();
+          
+          // Re-throw error for component-level handling
+          throw error;
         } finally {
           set({ isLoading: false });
         }
@@ -172,10 +282,21 @@ export const useChatStore = create<ChatStore>()(
       
       loadSession: async (sessionId: string) => {
         const { sessions } = get();
-        const session = sessions.find(s => s.id === sessionId);
+        let session = sessions.find(s => s.id === sessionId);
         
+        // If session not found locally, try to load from backend
         if (!session) {
-          throw new Error(`Session ${sessionId} not found`);
+          try {
+            session = await chatApi.getSession(sessionId);
+            
+            // Add to local sessions if loaded from backend
+            set(state => ({
+              sessions: [session!, ...state.sessions.filter(s => s.id !== sessionId)],
+            }));
+          } catch (error) {
+            console.error('Failed to load session from backend:', error);
+            throw new Error(`Session ${sessionId} not found`);
+          }
         }
         
         set({
@@ -256,6 +377,11 @@ export const useChatStore = create<ChatStore>()(
       searchSessions: (query: string): ChatSession[] => {
         const { sessions } = get();
         
+        // Ensure sessions is always an array
+        if (!Array.isArray(sessions)) {
+          return [];
+        }
+        
         if (!query.trim()) {
           return sessions;
         }
@@ -307,6 +433,22 @@ export const useChatStore = create<ChatStore>()(
             sessions: updatedSessions,
           };
         });
+        
+        // Auto-generate title using backend API after first assistant response
+        const { currentSession } = get();
+        if (currentSession && 
+            currentSession.title === 'New Chat' && 
+            message.role === 'assistant' && 
+            currentSession.messages.length >= 2) {
+          // Generate title asynchronously
+          chatApi.generateSessionTitle(currentSession.id)
+            .then(response => {
+              get().updateSessionTitle(currentSession.id, response.title);
+            })
+            .catch(error => {
+              console.warn('Failed to generate session title:', error);
+            });
+        }
       },
       
       updateMessage: (messageId: string, updates: Partial<Message>) => {
@@ -360,9 +502,66 @@ export const useChatStore = create<ChatStore>()(
         // This method is here for explicit saves if needed
       },
       
-      loadSessions: () => {
-        // The persist middleware handles this automatically on store initialization
-        // This method is here for explicit loads if needed
+      loadSessions: async () => {
+        set({ isLoadingSessions: true, error: null });
+        
+        try {
+          const historyResponse = await chatApi.getChatHistory();
+          
+          // Ensure the response has the expected structure
+          if (!historyResponse || !Array.isArray(historyResponse.sessions)) {
+            throw new Error('Invalid response format from server');
+          }
+          
+          // Convert summary to full sessions (we'll need to load individual sessions as needed)
+          const sessionsFromBackend: ChatSession[] = historyResponse.sessions.map(summary => ({
+            id: summary.id,
+            title: summary.title,
+            messages: [], // Will be loaded when session is opened
+            createdAt: summary.createdAt ? new Date(summary.createdAt) : new Date(),
+            updatedAt: summary.updatedAt ? new Date(summary.updatedAt) : new Date(),
+            provider: summary.provider as LLMProvider,
+            model: summary.model,
+            mcpServers: [], // Will be loaded when session is opened
+          }));
+          
+          // Merge with local sessions, preferring backend data
+          set(state => {
+            const currentSessions = Array.isArray(state.sessions) ? state.sessions : [];
+            const mergedSessions = [...sessionsFromBackend];
+            
+            // Add any local sessions that aren't in backend
+            currentSessions.forEach(localSession => {
+              if (!sessionsFromBackend.find(s => s.id === localSession.id)) {
+                mergedSessions.push(localSession);
+              }
+            });
+            
+            // Sort by updatedAt descending
+            mergedSessions.sort((a, b) => {
+              const aTime = a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0;
+              const bTime = b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0;
+              return bTime - aTime;
+            });
+            
+            return { 
+              sessions: mergedSessions,
+              isLoadingSessions: false,
+            };
+          });
+        } catch (error) {
+          console.error('Failed to load sessions from backend:', error);
+          set(state => ({ 
+            isLoadingSessions: false,
+            error: 'Failed to load chat history from server',
+            // Ensure sessions remains an array even on error
+            sessions: Array.isArray(state.sessions) ? state.sessions : [],
+          }));
+        }
+      },
+      
+      initializeStore: async () => {
+        await get().loadSessions();
       },
       
       // Tool call management
@@ -372,6 +571,10 @@ export const useChatStore = create<ChatStore>()(
       
       setLoading: (loading: boolean) => {
         set({ isLoading: loading });
+      },
+      
+      setError: (error: string | null) => {
+        set({ error });
       },
       
       // Utility functions
@@ -391,10 +594,27 @@ export const useChatStore = create<ChatStore>()(
     {
       name: 'chat-store',
       storage: createJSONStorage(() => localStorage),
-      // Only persist sessions, not the current session state
+      // Persist sessions and current session info
       partialize: (state) => ({
-        sessions: state.sessions,
+        sessions: Array.isArray(state.sessions) ? state.sessions : [],
+        currentSession: state.currentSession,
+        messages: state.messages || [],
       }),
+      // Ensure restored data is valid
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (!Array.isArray(state.sessions)) {
+            state.sessions = [];
+          }
+          if (!Array.isArray(state.messages)) {
+            state.messages = [];
+          }
+          // Reset loading states on rehydration
+          state.isLoading = false;
+          state.pendingToolCall = null;
+          state.error = null;
+        }
+      },
     }
   )
 );

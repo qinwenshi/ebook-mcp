@@ -40,8 +40,8 @@ export const useSettings = () => {
     store.removeLLMProvider(id);
   }, [store]);
 
-  const testLLMProvider = useCallback(async (id: string) => {
-    return await store.testLLMConnection(id);
+  const testLLMProvider = useCallback(async (id: string, apiKey?: string) => {
+    return await store.testLLMConnection(id, apiKey);
   }, [store]);
 
   // MCP Server management

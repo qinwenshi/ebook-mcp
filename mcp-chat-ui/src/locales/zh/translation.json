@@ -18,7 +18,9 @@
     "openMenu": "打开菜单",
     "today": "今天",
     "yesterday": "昨天",
-    "daysAgo": "{{count}} 天前"
+    "daysAgo": "{{count}} 天前",
+    "enabled": "已启用",
+    "disabled": "已禁用"
   },
   "app": {
     "title": "MCP 聊天界面",
@@ -26,6 +28,7 @@
   },
   "chat": {
     "sendMessage": "发送消息",
+    "sendMessageTooltip": "发送消息 (Enter)",
     "newChat": "新对话",
     "chatHistory": "对话历史",
     "noHistory": "暂无对话历史",
@@ -33,6 +36,9 @@
     "runTool": "运行工具",
     "cancelTool": "取消工具",
     "messagePlaceholder": "在此输入您的消息...",
+    "noSession": "无对话会话",
+    "createNewChat": "创建新对话以开始与 AI 助手的对话。",
+    "configureProviderFirst": "请先在设置中配置 LLM 提供商",
     "noMessages": "暂无消息。开始对话吧！",
     "toolExecuting": "工具执行中...",
     "toolCompleted": "工具执行完成",
@@ -125,7 +131,14 @@
     "unknownError": "发生未知错误",
     "fileNotFound": "文件未找到",
     "invalidConfiguration": "配置无效",
-    "serverUnavailable": "服务器不可用"
+    "serverUnavailable": "服务器不可用",
+    "noActiveSession": "无活动对话会话。请创建新对话。",
+    "noValidProvider": "未配置有效的 LLM 提供商。请检查您的设置。",
+    "error": "错误"
+  },
+  "warnings": {
+    "configurationRequired": "需要配置",
+    "noValidProvider": "请在设置中配置有效的 LLM 提供商以开始聊天。"
   },
   "navigation": {
     "home": "首页",
@@ -147,5 +160,42 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统"
+  },
+  "accessibility": {
+    "title": "无障碍功能",
+    "description": "配置无障碍功能以改善您的使用体验",
+    "visual": "视觉无障碍",
+    "motion": "动画和过渡",
+    "interaction": "交互",
+    "systemInfo": "系统偏好设置",
+    "info": "无障碍信息",
+    "highContrast": "高对比度模式",
+    "highContrastDescription": "增加对比度以提高可见性",
+    "highContrastSystemEnabled": "系统高对比度已启用",
+    "largeText": "大字体",
+    "largeTextDescription": "增大界面中的文字大小",
+    "focusVisible": "增强焦点指示器",
+    "focusVisibleDescription": "为键盘导航显示清晰的焦点指示器",
+    "reducedMotion": "减少动画",
+    "reducedMotionDescription": "最小化动画和过渡效果",
+    "reducedMotionSystemEnabled": "系统减少动画已启用",
+    "keyboardNavigation": "增强键盘导航",
+    "keyboardNavigationDescription": "通过方向键和快捷键改善键盘导航",
+    "screenReaderAnnouncements": "屏幕阅读器播报",
+    "screenReaderAnnouncementsDescription": "向屏幕阅读器播报重要更改和更新",
+    "systemHighContrast": "系统高对比度",
+    "systemReducedMotion": "系统减少动画",
+    "wcagCompliance": "WCAG 2.1 AA 合规性",
+    "wcagDescription": "此应用程序遵循 Web 内容无障碍指南 (WCAG) 2.1 AA 标准，确保所有用户的无障碍访问。",
+    "keyboardSupport": "完整的键盘导航支持",
+    "screenReaderSupport": "屏幕阅读器兼容性",
+    "colorContrastSupport": "充足的颜色对比度",
+    "focusManagement": "适当的焦点管理",
+    "skipToMain": "跳转到主要内容",
+    "skipToNavigation": "跳转到导航",
+    "openInNewWindow": "在新窗口中打开",
+    "loading": "加载中",
+    "error": "错误",
+    "success": "成功"
   }
 }

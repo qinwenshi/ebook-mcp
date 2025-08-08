@@ -31,7 +31,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     const [, setIsFocused] = useState(false);
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const inputId = id || `input-${Math.random().toString(36).substring(2, 11)}`;
 
     const baseClasses = [
       'block px-3 py-2 border rounded-md shadow-sm',
@@ -78,7 +78,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="relative">
         {leftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gray-400">{leftIcon}</span>
+            <span className="text-gray-400" aria-hidden="true">{leftIcon}</span>
           </div>
         )}
         <input
@@ -90,6 +90,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           } ${rightIcon || loading ? 'pr-10' : ''} ${className}`}
           disabled={disabled || loading}
           aria-invalid={error ? 'true' : 'false'}
+          aria-busy={loading}
+          aria-required={props.required}
           aria-describedby={
             error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
           }
@@ -105,7 +107,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         />
         {(rightIcon || loading) && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            {loading ? <LoadingSpinner /> : <span className="text-gray-400">{rightIcon}</span>}
+            {loading ? <LoadingSpinner /> : <span className="text-gray-400" aria-hidden="true">{rightIcon}</span>}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Button, Badge, Alert } from './ui';
+import { useModalAccessibility } from '../hooks/useEnhancedAccessibility';
 import type { ToolCall } from '../types';
 
 export interface ToolConfirmationDialogProps {
@@ -20,6 +21,7 @@ const ToolConfirmationDialog: React.FC<ToolConfirmationDialogProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
+  const { modalRef } = useModalAccessibility(isOpen);
 
   if (!toolCall) {
     return null;
@@ -100,34 +102,41 @@ const ToolConfirmationDialog: React.FC<ToolConfirmationDialogProps> = ({
       closeOnOverlayClick={!isConfirming && !isExecuting}
       closeOnEscape={!isConfirming && !isExecuting}
     >
+      <div ref={modalRef}>
       <div className="space-y-6">
         {/* Warning Alert */}
-        <Alert variant="warning">
+        <Alert variant="warning" role="alert" aria-live="assertive">
           <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg 
+              className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
             <div>
               <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
-                {t('chat.confirmToolExecution')}
+                {t('chat.confirmToolExecution', 'Confirm Tool Execution')}
               </h4>
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                {t('chat.toolExecutionWarning')}
+                {t('chat.toolExecutionWarning', 'This tool will perform actions on your system. Please review the parameters carefully before proceeding.')}
               </p>
             </div>
           </div>
         </Alert>
 
         {/* Tool Information */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               </svg>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                 {toolCall.function.name}
               </h3>
               <Badge variant="secondary" size="sm">
@@ -141,7 +150,7 @@ const ToolConfirmationDialog: React.FC<ToolConfirmationDialogProps> = ({
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('chat.toolDescription')}
             </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 p-3 rounded border">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 p-2 sm:p-3 rounded border">
               {/* TODO: This would come from the MCP server tool schema */}
               This tool will be executed with the parameters shown below. Please review carefully before proceeding.
             </p>
@@ -234,19 +243,23 @@ const ToolConfirmationDialog: React.FC<ToolConfirmationDialogProps> = ({
         </details>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="ghost"
             onClick={handleCancel}
             disabled={isConfirming || isExecuting}
+            aria-label={t('chat.cancelToolExecution', 'Cancel tool execution')}
+            shortcut="Esc"
           >
-            {t('chat.cancelTool')}
+            {t('chat.cancelTool', 'Cancel')}
           </Button>
           
           <Button
             onClick={handleConfirm}
             disabled={isConfirming || isExecuting || !!argumentsError}
-            className="min-w-[100px]"
+            className="min-w-[100px] sm:order-last"
+            aria-label={t('chat.confirmToolExecution', 'Confirm and execute tool')}
+            aria-describedby={argumentsError ? 'parameter-error' : undefined}
           >
             {isConfirming || isExecuting ? (
               <div className="flex items-center gap-2">
@@ -266,6 +279,7 @@ const ToolConfirmationDialog: React.FC<ToolConfirmationDialogProps> = ({
             )}
           </Button>
         </div>
+      </div>
       </div>
     </Modal>
   );

@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { ChatSession, ChatSessionSummary, Message, LLMProvider } from '@/types';
 import { NotFoundError, InternalServerError, ValidationError } from '@/lib/errors';
+import { getEncryptionService } from '@/lib/encryption';
 
 export interface SessionSearchOptions {
   query?: string;
@@ -17,6 +18,21 @@ export interface SessionStorage {
   metadata: {
     lastCleanup: string;
     totalSessions: number;
+    version: string;
+    encrypted: boolean;
+  };
+}
+
+export interface SessionExport {
+  version: string;
+  exportDate: string;
+  sessions: ChatSession[];
+  metadata: {
+    totalSessions: number;
+    dateRange: {
+      earliest: string;
+      latest: string;
+    };
   };
 }
 
@@ -25,6 +41,7 @@ export class SessionManager {
   private readonly storageFile: string;
   private readonly maxSessions: number;
   private readonly cleanupIntervalMs: number;
+  private readonly encryptionService = getEncryptionService();
   private storage: SessionStorage;
   private cleanupTimer?: NodeJS.Timeout;
 
@@ -42,6 +59,8 @@ export class SessionManager {
       metadata: {
         lastCleanup: new Date().toISOString(),
         totalSessions: 0,
+        version: '1.0.0',
+        encrypted: false,
       },
     };
   }
@@ -355,6 +374,232 @@ Title:`;
   }
 
   /**
+   * Export chat history for backup
+   */
+  async exportChatHistory(options: {
+    sessionIds?: string[];
+    dateFrom?: Date;
+    dateTo?: Date;
+    includeSystemMessages?: boolean;
+  } = {}): Promise<SessionExport> {
+    const { sessionIds, dateFrom, dateTo, includeSystemMessages = false } = options;
+    
+    let sessions = Object.values(this.storage.sessions);
+    
+    // Filter by session IDs if specified
+    if (sessionIds && sessionIds.length > 0) {
+      sessions = sessions.filter(session => sessionIds.includes(session.id));
+    }
+    
+    // Filter by date range
+    if (dateFrom) {
+      sessions = sessions.filter(session => session.createdAt >= dateFrom);
+    }
+    
+    if (dateTo) {
+      sessions = sessions.filter(session => session.createdAt <= dateTo);
+    }
+    
+    // Filter messages if needed
+    const exportSessions = sessions.map(session => ({
+      ...session,
+      messages: includeSystemMessages 
+        ? session.messages 
+        : session.messages.filter(msg => msg.role !== 'system'),
+    }));
+    
+    // Calculate metadata
+    const dates = exportSessions.map(s => s.createdAt).sort();
+    const earliest = dates.length > 0 ? dates[0].toISOString() : new Date().toISOString();
+    const latest = dates.length > 0 ? dates[dates.length - 1].toISOString() : new Date().toISOString();
+    
+    return {
+      version: '1.0.0',
+      exportDate: new Date().toISOString(),
+      sessions: exportSessions,
+      metadata: {
+        totalSessions: exportSessions.length,
+        dateRange: {
+          earliest,
+          latest,
+        },
+      },
+    };
+  }
+
+  /**
+   * Import chat history from backup
+   */
+  async importChatHistory(exportData: SessionExport, options: {
+    overwriteExisting?: boolean;
+    generateNewIds?: boolean;
+  } = {}): Promise<{ imported: number; skipped: number; errors: string[] }> {
+    const { overwriteExisting = false, generateNewIds = false } = options;
+    let imported = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+    
+    try {
+      if (exportData.version !== '1.0.0') {
+        throw new ValidationError('Unsupported export version');
+      }
+      
+      for (const session of exportData.sessions) {
+        try {
+          let sessionId = session.id;
+          
+          // Generate new ID if requested or if conflict exists
+          if (generateNewIds || (this.storage.sessions[sessionId] && !overwriteExisting)) {
+            sessionId = this.generateSessionId();
+          }
+          
+          // Skip if session exists and not overwriting
+          if (this.storage.sessions[sessionId] && !overwriteExisting) {
+            skipped++;
+            continue;
+          }
+          
+          // Import session with new ID if needed
+          const importedSession: ChatSession = {
+            ...session,
+            id: sessionId,
+            // Ensure dates are Date objects
+            createdAt: new Date(session.createdAt),
+            updatedAt: new Date(session.updatedAt),
+            messages: session.messages.map(msg => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            })),
+          };
+          
+          this.storage.sessions[sessionId] = importedSession;
+          imported++;
+        } catch (error) {
+          errors.push(`Failed to import session ${session.id}: ${error}`);
+        }
+      }
+      
+      this.storage.metadata.totalSessions = Object.keys(this.storage.sessions).length;
+      await this.saveSessions();
+      
+      return { imported, skipped, errors };
+    } catch (error) {
+      console.error('Failed to import chat history:', error);
+      throw new InternalServerError('Failed to import chat history');
+    }
+  }
+
+  /**
+   * Secure cleanup - permanently delete sessions and clear sensitive data
+   */
+  async secureCleanup(options: {
+    olderThanDays?: number;
+    sessionIds?: string[];
+    clearAllSensitiveData?: boolean;
+  } = {}): Promise<{ deletedSessions: number; clearedData: boolean }> {
+    const { olderThanDays = 30, sessionIds, clearAllSensitiveData = false } = options;
+    
+    let deletedSessions = 0;
+    const now = new Date();
+    const maxAge = olderThanDays * 24 * 60 * 60 * 1000;
+    
+    // Delete specific sessions if provided
+    if (sessionIds && sessionIds.length > 0) {
+      for (const sessionId of sessionIds) {
+        if (this.storage.sessions[sessionId]) {
+          delete this.storage.sessions[sessionId];
+          deletedSessions++;
+        }
+      }
+    } else {
+      // Delete old sessions
+      const sessions = Object.values(this.storage.sessions);
+      const oldSessions = sessions.filter(session => 
+        now.getTime() - session.updatedAt.getTime() > maxAge
+      );
+      
+      for (const session of oldSessions) {
+        delete this.storage.sessions[session.id];
+        deletedSessions++;
+      }
+    }
+    
+    // Clear sensitive data from remaining sessions if requested
+    let clearedData = false;
+    if (clearAllSensitiveData) {
+      Object.values(this.storage.sessions).forEach(session => {
+        session.messages = session.messages.map(message => ({
+          ...message,
+          // Remove any potential sensitive content patterns
+          content: this.sanitizeMessageContent(message.content),
+        }));
+      });
+      clearedData = true;
+    }
+    
+    this.storage.metadata.totalSessions = Object.keys(this.storage.sessions).length;
+    this.storage.metadata.lastCleanup = now.toISOString();
+    
+    await this.saveSessions();
+    
+    return { deletedSessions, clearedData };
+  }
+
+  /**
+   * Get privacy and security statistics
+   */
+  getPrivacyStatistics(): {
+    totalSessions: number;
+    totalMessages: number;
+    oldestSession: string | null;
+    newestSession: string | null;
+    averageSessionAge: number;
+    sessionsWithSensitiveData: number;
+    lastCleanup: string;
+  } {
+    const sessions = Object.values(this.storage.sessions);
+    const now = new Date();
+    
+    if (sessions.length === 0) {
+      return {
+        totalSessions: 0,
+        totalMessages: 0,
+        oldestSession: null,
+        newestSession: null,
+        averageSessionAge: 0,
+        sessionsWithSensitiveData: 0,
+        lastCleanup: this.storage.metadata.lastCleanup,
+      };
+    }
+    
+    const sortedByDate = sessions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const totalMessages = sessions.reduce((sum, session) => sum + session.messages.length, 0);
+    
+    const totalAge = sessions.reduce((sum, session) => 
+      sum + (now.getTime() - session.createdAt.getTime()), 0
+    );
+    const averageSessionAge = totalAge / sessions.length / (24 * 60 * 60 * 1000); // in days
+    
+    // Count sessions that might contain sensitive data (API keys, tokens, etc.)
+    const sensitivePatterns = [/api[_-]?key/i, /token/i, /secret/i, /password/i];
+    const sessionsWithSensitiveData = sessions.filter(session =>
+      session.messages.some(message =>
+        sensitivePatterns.some(pattern => pattern.test(message.content))
+      )
+    ).length;
+    
+    return {
+      totalSessions: sessions.length,
+      totalMessages,
+      oldestSession: sortedByDate[0].createdAt.toISOString(),
+      newestSession: sortedByDate[sortedByDate.length - 1].createdAt.toISOString(),
+      averageSessionAge,
+      sessionsWithSensitiveData,
+      lastCleanup: this.storage.metadata.lastCleanup,
+    };
+  }
+
+  /**
    * Shutdown the session manager
    */
   async shutdown(): Promise<void> {
@@ -414,6 +659,8 @@ Title:`;
           metadata: {
             lastCleanup: new Date().toISOString(),
             totalSessions: 0,
+            version: '1.0.0',
+            encrypted: false,
           },
         };
         await this.saveSessions();
@@ -442,6 +689,23 @@ Title:`;
         console.error('Automatic cleanup failed:', error);
       }
     }, this.cleanupIntervalMs);
+  }
+
+  private sanitizeMessageContent(content: string): string {
+    // Remove potential API keys, tokens, and other sensitive data
+    const sensitivePatterns = [
+      /sk-[a-zA-Z0-9]{20,}/g, // OpenAI-style API keys
+      /sk-or-[a-zA-Z0-9]{30,}/g, // OpenRouter API keys
+      /Bearer\s+[a-zA-Z0-9]{20,}/g, // Bearer tokens
+      /[a-zA-Z0-9]{32,}/g, // Long alphanumeric strings (potential tokens)
+    ];
+    
+    let sanitized = content;
+    sensitivePatterns.forEach(pattern => {
+      sanitized = sanitized.replace(pattern, '[REDACTED]');
+    });
+    
+    return sanitized;
   }
 }
 

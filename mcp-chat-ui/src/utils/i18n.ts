@@ -87,8 +87,15 @@ export const formatDateTime = (date: Date, locale: string): string => {
 
 // Format relative time (e.g., "2 minutes ago")
 export const formatRelativeTime = (date: Date, locale: string): string => {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  
+  // Check if the date is valid
+  if (isNaN(dateObj.getTime())) {
+    return 'Unknown time';
+  }
+  
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
   
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   

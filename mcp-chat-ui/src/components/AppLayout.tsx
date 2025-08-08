@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui';
 import Sidebar from './Sidebar';
+import { useClickOutside } from '../hooks/useClickOutside';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,30 +13,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string>();
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Close sidebar when route changes on mobile
+  // Close sidebar when route changes
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
 
-  // Close sidebar when clicking outside on mobile
+  // Close sidebar when clicking outside
+  useClickOutside(
+    sidebarRef,
+    () => setSidebarOpen(false),
+    sidebarOpen,
+    [
+      '[aria-label*="Open menu"]',
+      '[aria-label*="打开菜单"]',
+      '[data-sidebar-trigger]'
+    ]
+  );
+
+  // Handle overlay click for mobile
   const handleOverlayClick = () => {
     setSidebarOpen(false);
-  };
-
-  const handleSessionSelect = (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-    // Navigate to chat page with session
-    // In a real implementation, this would update the URL or state
-    console.log('Selected session:', sessionId);
-  };
-
-  const handleNewChat = (provider: string, model: string) => {
-    // Create new chat session
-    // In a real implementation, this would create a new session and navigate to it
-    console.log('Creating new chat with:', provider, model);
-    setCurrentSessionId(undefined);
   };
 
   // Navigation items configuration
@@ -69,6 +69,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-gray-900">
+      {/* Skip links for keyboard navigation */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:shadow-lg"
+      >
+        {t('accessibility.skipToMain', 'Skip to main content')}
+      </a>
+      <a 
+        href="#sidebar-navigation" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-32 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:shadow-lg"
+      >
+        {t('accessibility.skipToNavigation', 'Skip to navigation')}
+      </a>
+
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -81,18 +95,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       )}
 
       {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0 lg:static lg:inset-0
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      <aside 
+        ref={sidebarRef}
+        id="sidebar-navigation"
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 sm:w-72 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out
+          lg:translate-x-0 lg:static lg:inset-0 lg:w-80
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        aria-label={t('navigation.sidebar', 'Sidebar navigation')}
+      >
         {location.pathname === '/chat' ? (
           <Sidebar
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
-            currentSessionId={currentSessionId}
-            onSessionSelect={handleSessionSelect}
-            onNewChat={handleNewChat}
           />
         ) : (
           <div className="flex flex-col h-full">
@@ -149,28 +165,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </div>
           </div>
         )}
-      </div>
+      </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar for mobile */}
         <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="flex items-center justify-between h-16 px-4">
+          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(true)}
               aria-label={t('common.openMenu', 'Open menu')}
-              className="p-2 -ml-2"
+              className="p-2 -ml-2 flex-shrink-0"
+              data-sidebar-trigger
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </Button>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+            <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate px-2 min-w-0">
               {getCurrentPageTitle()}
             </h1>
-            <div className="w-10 flex justify-end">
+            <div className="w-10 flex justify-end flex-shrink-0">
               <Link to="/settings">
                 <Button
                   variant="ghost"
@@ -178,7 +195,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   aria-label={t('navigation.settings', 'Settings')}
                   className="p-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -189,7 +206,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         {/* Main content area */}
-        <main className="flex-1 overflow-hidden bg-white dark:bg-gray-900">
+        <main 
+          ref={mainContentRef}
+          id="main-content"
+          className="flex-1 overflow-hidden bg-white dark:bg-gray-900"
+          role="main"
+          aria-label={t('navigation.mainContent', 'Main content')}
+        >
           {children}
         </main>
       </div>

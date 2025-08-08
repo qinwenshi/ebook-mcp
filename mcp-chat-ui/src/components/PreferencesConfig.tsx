@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../store/settingsStore';
 import { Card, CardHeader, CardTitle, CardContent, Select } from './ui';
 import { LanguageSelector } from './LanguageSelector';
+import AccessibilityConfig from './AccessibilityConfig';
+import ThemeToggle from './ThemeToggle';
 import type { Theme, Language } from '../types';
 
 const PreferencesConfig: React.FC = () => {
@@ -10,21 +12,19 @@ const PreferencesConfig: React.FC = () => {
   const {
     preferences,
     updatePreferences,
-    changeTheme,
-    changeLanguage,
     isSaving
   } = useSettingsStore();
 
   const [localPreferences, setLocalPreferences] = useState(preferences);
 
-  const handleThemeChange = (theme: Theme) => {
-    setLocalPreferences(prev => ({ ...prev, theme }));
-    changeTheme(theme);
-  };
-
-  const handleLanguageChange = (language: Language) => {
-    setLocalPreferences(prev => ({ ...prev, language }));
-    changeLanguage(language);
+  const handleLanguageChange = (newLanguage: Language) => {
+    // Store language in localStorage (browser-specific)
+    localStorage.setItem('mcp-chat-ui-language', newLanguage);
+    
+    // Update i18n immediately
+    import('../utils/i18n').then(({ default: i18n }) => {
+      i18n.changeLanguage(newLanguage);
+    });
   };
 
   const handleTogglePreference = (key: keyof typeof preferences, value: boolean) => {
@@ -50,23 +50,7 @@ const PreferencesConfig: React.FC = () => {
       <CardContent>
         <div className="space-y-6">
           {/* Theme Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('settings.theme')}
-            </label>
-            <Select
-              value={localPreferences.theme}
-              onChange={(e) => handleThemeChange(e.target.value as Theme)}
-              options={themeOptions}
-              className="w-full"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {localPreferences.theme === 'system' 
-                ? 'Theme will follow your system preference'
-                : `Using ${localPreferences.theme} theme`
-              }
-            </p>
-          </div>
+          <ThemeToggle />
 
           {/* Language Selection */}
           <div>
@@ -201,4 +185,13 @@ const PreferencesConfig: React.FC = () => {
   );
 };
 
-export default PreferencesConfig;
+const PreferencesConfigWithAccessibility: React.FC = () => {
+  return (
+    <div className="space-y-6">
+      <PreferencesConfig />
+      <AccessibilityConfig />
+    </div>
+  );
+};
+
+export default PreferencesConfigWithAccessibility;

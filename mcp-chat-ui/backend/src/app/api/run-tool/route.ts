@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withCors } from '@/lib/cors';
-import { handleAsyncRoute } from '@/lib/errors';
+import { withSecurity } from '@/lib/security';
 import { validateRunToolRequest } from '@/lib/validation';
 import { getToolExecutionService } from '@/services/ToolExecutionService';
 import { RunToolResponse } from '@/types';
@@ -47,5 +46,5 @@ async function runToolHandler(request: Request): Promise<NextResponse> {
   }
 }
 
-export const POST = withCors(handleAsyncRoute(runToolHandler));
-export const OPTIONS = withCors(async () => new NextResponse(null, { status: 200 }));
+export const POST = withSecurity(runToolHandler);
+export const OPTIONS = withSecurity(async () => new NextResponse(null, { status: 200 }));

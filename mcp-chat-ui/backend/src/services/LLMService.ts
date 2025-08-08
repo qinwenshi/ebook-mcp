@@ -583,3 +583,71 @@ export function getProviderModels(provider: LLMProvider): Array<{ id: string; na
       return [];
   }
 }
+/**
+ *
+ Test LLM provider connection
+ */
+export async function testLLMProviderConnection(provider: {
+  name: string;
+  apiKey: string;
+  baseUrl?: string;
+  models: Array<{ id: string; name: string; supportsToolCalling: boolean; maxTokens: number }>;
+}): Promise<{ success: boolean; error?: string }> {
+  if (!provider.apiKey) {
+    return { success: false, error: 'API key is required' };
+  }
+
+  const baseUrl = provider.baseUrl || getDefaultProviderConfig(provider.name as LLMProvider).baseUrl;
+  
+  try {
+    // Create a minimal test request
+    const testPayload = {
+      model: provider.models[0]?.id || getDefaultModelForProvider(provider.name as LLMProvider),
+      messages: [{ role: 'user', content: 'Hello' }],
+      max_tokens: 5,
+      temperature: 0,
+    };
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Set authorization header based on provider
+    if (provider.name === 'openai' || provider.name === 'deepseek') {
+      headers['Authorization'] = `Bearer ${provider.apiKey}`;
+    } else if (provider.name === 'openrouter') {
+      headers['Authorization'] = `Bearer ${provider.apiKey}`;
+      headers['HTTP-Referer'] = 'https://mcp-chat-ui.local';
+      headers['X-Title'] = 'MCP Chat UI';
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(testPayload),
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+      return { success: false, error: errorMessage };
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Helper function to get default model for provider
+ */
+function getDefaultModelForProvider(provider: LLMProvider): string {
+  const defaultModels: Record<LLMProvider, string> = {
+    openai: 'gpt-3.5-turbo',
+    deepseek: 'deepseek-chat',
+    openrouter: 'openai/gpt-3.5-turbo',
+  };
+  return defaultModels[provider] || 'gpt-3.5-turbo';
+}

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Modal, Select } from './ui';
 
+import type { LLMProvider } from '../types';
+
 interface NewChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateChat: (provider: string, model: string) => void;
+  onCreateChat: (provider: LLMProvider, model: string) => void;
 }
 
 const NewChatModal: React.FC<NewChatModalProps> = ({
@@ -42,7 +44,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
 
   const handleCreateChat = () => {
     if (selectedProvider && selectedModel) {
-      onCreateChat(selectedProvider, selectedModel);
+      onCreateChat(selectedProvider as LLMProvider, selectedModel);
       handleClose();
     }
   };
@@ -105,22 +107,23 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
             </div>
           </div>
         )}
-        
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-          >
-            {t('common.cancel', 'Cancel')}
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleCreateChat}
-            disabled={!selectedProvider || !selectedModel}
-          >
-            {t('chat.createChat', 'Create Chat')}
-          </Button>
-        </div>
+      </div>
+      
+      {/* Button area */}
+      <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+        <Button
+          variant="outline"
+          onClick={handleClose}
+        >
+          {t('common.cancel', 'Cancel')}
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleCreateChat}
+          disabled={!selectedProvider || !selectedModel}
+        >
+          {t('chat.createChat', 'Create Chat')}
+        </Button>
       </div>
     </Modal>
   );

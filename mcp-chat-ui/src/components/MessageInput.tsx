@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui';
+import { useEnhancedAccessibility } from '../hooks/useEnhancedAccessibility';
 
 export interface MessageInputProps {
   onSendMessage: (message: string) => void | Promise<void>;
@@ -23,6 +24,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { screenReaderUtils, ariaUtils } = useEnhancedAccessibility();
 
   // Focus the textarea when component mounts
   useEffect(() => {
@@ -50,17 +52,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
 
     setIsSending(true);
+    screenReaderUtils.announceLoading(true, 'Message');
+    
     try {
       await onSendMessage(trimmedMessage);
       setMessage('');
+      screenReaderUtils.announceSuccess('Message sent', 'Chat');
+      
       // Focus back to textarea after sending
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 0);
     } catch (error) {
       console.error('Failed to send message:', error);
+      screenReaderUtils.announceError('Failed to send message', 'Chat');
     } finally {
       setIsSending(false);
+      screenReaderUtils.announceLoading(false, 'Message');
     }
   };
 
@@ -113,14 +121,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const isNearLimit = characterCount > maxLength * 0.8;
 
   return (
-    <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${className}`}>
-      <div className="p-4 lg:p-6">
+    <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky bottom-0 z-10 ${className}`}>
+      <div className="p-3 sm:p-4 lg:p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-end space-x-3">
+          <div className="flex items-end space-x-2 sm:space-x-3">
             {/* Message input */}
             <div className="flex-1 relative">
               <textarea
                 ref={textareaRef}
+                id="message-input"
                 value={message}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
@@ -128,6 +137,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 placeholder={placeholder || t('chat.messagePlaceholder')}
                 disabled={isDisabled}
                 rows={1}
+                aria-label={t('chat.messageInputLabel', 'Type your message')}
+                aria-describedby="message-input-help"
+                aria-invalid={characterCount >= maxLength ? 'true' : 'false'}
                 className={`
                   w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 
                   bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white
@@ -161,8 +173,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <Button
               onClick={handleSendMessage}
               disabled={!canSend}
-              className="px-4 py-3 h-11 flex-shrink-0 min-w-[80px]"
+              className="px-3 sm:px-4 py-3 h-11 flex-shrink-0 min-w-[60px] sm:min-w-[80px]"
               aria-label={t('chat.sendMessage')}
+              shortcut="Enter"
+              tooltip={t('chat.sendMessageTooltip', 'Send message (Enter)')}
             >
               {isSending || isLoading ? (
                 <div className="flex items-center gap-2">
@@ -188,20 +202,26 @@ const MessageInput: React.FC<MessageInputProps> = ({
           </div>
           
           {/* Helper text */}
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-4">
-              <span>
+          <div 
+            id="message-input-help" 
+            className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 dark:text-gray-400"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <span className="hidden sm:inline">
                 Press <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Enter</kbd> to send, 
                 <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs ml-1">Shift+Enter</kbd> for new line
               </span>
-              <span>
+              <span className="sm:hidden">
+                <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Enter</kbd> to send
+              </span>
+              <span className="hidden sm:inline">
                 <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Esc</kbd> to clear
               </span>
             </div>
             
             {/* Word count */}
             {message.trim().length > 0 && (
-              <span className="text-gray-400 dark:text-gray-500">
+              <span className="text-gray-400 dark:text-gray-500 text-right" aria-live="polite">
                 {message.trim().split(/\s+/).length} word{message.trim().split(/\s+/).length !== 1 ? 's' : ''}
               </span>
             )}

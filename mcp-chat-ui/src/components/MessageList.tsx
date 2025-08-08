@@ -127,14 +127,14 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className={`flex-1 relative ${className}`}>
+    <div className={`h-full flex flex-col relative ${className}`}>
       {/* Messages container */}
       <div
         ref={containerRef}
-        className="h-full overflow-y-auto scroll-smooth"
+        className="flex-1 overflow-y-auto scroll-smooth"
         style={{ scrollBehavior: 'smooth' }}
       >
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto px-2 sm:px-0">
           {messageGroups.map((group) => (
             <div key={group.date}>
               {/* Date header */}
@@ -176,13 +176,13 @@ const MessageList: React.FC<MessageListProps> = ({
 
       {/* Scroll to bottom button */}
       {!isNearBottom && messages.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-20">
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
           <button
             onClick={handleScrollToBottom}
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 sm:p-3 shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             aria-label="Scroll to bottom"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </button>

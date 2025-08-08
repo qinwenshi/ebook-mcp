@@ -73,15 +73,85 @@ export interface MCPServerConfig {
   status: 'connected' | 'disconnected' | 'error';
 }
 
+export interface AccessibilityPreferences {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  screenReaderAnnouncements: boolean;
+  keyboardNavigation: boolean;
+  focusVisible: boolean;
+  largeText: boolean;
+}
+
 export interface UserPreferences {
   theme: Theme;
   language: Language;
   autoScroll: boolean;
   soundEnabled: boolean;
+  accessibility?: AccessibilityPreferences;
 }
 
 export interface Settings {
   llmProviders: LLMProviderConfig[];
   mcpServers: MCPServerConfig[];
   preferences: UserPreferences;
+}
+
+// API Request/Response types
+export interface ChatRequest {
+  messages: Message[];
+  sessionId: string;
+  provider: LLMProvider;
+  model: string;
+  // Note: apiKey is now handled securely by the backend
+  baseUrl?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  availableTools?: MCPTool[];
+}
+
+export interface ChatResponse {
+  reply?: string;
+  toolCalls?: ToolCall[];
+  sessionId: string;
+  error?: string;
+}
+
+export interface RunToolRequest {
+  toolCall: ToolCall;
+  sessionId: string;
+  messages: Message[];
+}
+
+export interface RunToolResponse {
+  result: string;
+  reply: string;
+  error?: string;
+}
+
+export interface ChatHistoryResponse {
+  sessions: ChatSessionSummary[];
+}
+
+export interface ChatSessionSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  provider: string;
+  model: string;
+}
+
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: object;
+  serverId: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
+  statusCode: number;
 }

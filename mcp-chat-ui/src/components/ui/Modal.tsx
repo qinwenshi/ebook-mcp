@@ -28,11 +28,11 @@ const Modal: React.FC<ModalProps> = ({
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
   const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-full mx-4',
+    sm: 'max-w-sm sm:max-w-md',
+    md: 'max-w-md sm:max-w-lg',
+    lg: 'max-w-lg sm:max-w-2xl',
+    xl: 'max-w-2xl sm:max-w-4xl',
+    full: 'max-w-full mx-2 sm:mx-4',
   };
 
   useEffect(() => {
@@ -112,28 +112,26 @@ const Modal: React.FC<ModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       aria-labelledby={title ? 'modal-title' : undefined}
       aria-modal="true"
       role="dialog"
     >
+      {/* Background overlay */}
       <div
-        className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+        className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        aria-hidden="true"
         onClick={handleOverlayClick}
-      >
-        {/* Background overlay */}
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          aria-hidden="true"
-        />
+      />
 
-        {/* Modal panel */}
-        <div
-          ref={modalRef}
-          className={`inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:p-6 ${sizeClasses[size]} w-full ${className}`}
-          tabIndex={-1}
-          onKeyDown={handleKeyDown}
-        >
+      {/* Modal panel */}
+      <div
+        ref={modalRef}
+        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto ${className}`}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="p-4 sm:p-6">
           {/* Header */}
           {(title || showCloseButton) && (
             <div className="flex items-center justify-between mb-4">

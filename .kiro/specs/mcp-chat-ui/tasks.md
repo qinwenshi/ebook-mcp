@@ -157,29 +157,29 @@
     - _Requirements: 2.2, 7.2, 9.2, 9.3, 9.4_
 
 - [ ] 11. Connect frontend and backend
-  - [ ] 11.1 Implement API client service
+  - [x] 11.1 Implement API client service
     - Create API client with proper error handling and retry logic
     - Implement request/response interceptors for authentication
     - Add loading state management and error reporting
     - Create type-safe API calls with proper TypeScript interfaces
     - _Requirements: 1.2, 1.3, 8.3_
 
-  - [ ] 11.2 Integrate chat functionality
+  - [x] 11.2 Integrate chat functionality
     - Connect chat interface to backend API endpoints
     - Implement real-time message updates and loading states
     - Add tool confirmation workflow with backend integration
     - Create proper error handling and user feedback
     - _Requirements: 1.1, 1.2, 1.3, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3_
 
-- [ ] 12. Add security and data privacy features
-  - [ ] 12.1 Implement secure storage
-    - Create encrypted storage for API keys using browser crypto APIs
-    - Implement secure session storage with proper cleanup
+- [x] 12. Add security and data privacy features
+  - [x] 12.1 Implement secure storage
+    - Implement secure API key storage in backend `.env` file with encryption
+    - Create secure session storage with proper cleanup in backend
     - Add data export functionality for chat history
     - Create privacy-focused data handling throughout the application
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ] 12.2 Add input validation and security
+  - [x] 12.2 Add input validation and security
     - Implement comprehensive input validation for all user inputs
     - Add XSS prevention for chat messages and configurations
     - Create rate limiting and request validation
@@ -187,14 +187,14 @@
     - _Requirements: 7.1, 7.4_
 
 - [ ] 13. Implement responsive design and accessibility
-  - [ ] 13.1 Create responsive layouts
+  - [x] 13.1 Create responsive layouts
     - Ensure all components work properly on mobile and desktop
     - Implement touch-friendly interactions for mobile devices
     - Add proper viewport handling and responsive breakpoints
     - Create adaptive navigation for different screen sizes
     - _Requirements: 8.1, 8.2, 8.4_
 
-  - [ ] 13.2 Add accessibility features
+  - [x] 13.2 Add accessibility features
     - Implement proper ARIA labels and keyboard navigation
     - Add screen reader support for all interactive elements
     - Create high contrast mode and accessibility preferences

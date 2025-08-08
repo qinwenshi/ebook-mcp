@@ -10,6 +10,7 @@ export { default as MCPServerConfig } from './MCPServerConfig';
 export { default as PreferencesConfig } from './PreferencesConfig';
 export { LanguageSelector } from './LanguageSelector';
 export { ErrorBoundary } from './ErrorBoundary';
+export { default as ResponsiveTest } from './ResponsiveTest';
 export { default as MessageList } from './MessageList';
 export { default as MessageItem } from './MessageItem';
 export { default as MessageInput } from './MessageInput';

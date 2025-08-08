@@ -1,25 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Button, Input, Modal } from './ui';
+import { Button, Input, Modal, Spinner } from './ui';
 import { LanguageSelector } from './LanguageSelector';
 import ChatHistoryItem from './ChatHistoryItem';
 import NewChatModal from './NewChatModal';
-import { useChatSessions } from '../hooks/useChatSessions';
+import { useChatStore } from '../store/chatStore';
+import { useKeyboardNavigation } from '../hooks/useAccessibility';
+import type { LLMProvider } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  currentSessionId?: string;
-  onSessionSelect: (sessionId: string) => void;
-  onNewChat: (provider: string, model: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   onClose,
-  currentSessionId,
-  onSessionSelect,
-  onNewChat,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,28 +25,58 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [renameSessionId, setRenameSessionId] = useState('');
   const [newSessionTitle, setNewSessionTitle] = useState('');
   const [deleteSessionId, setDeleteSessionId] = useState('');
+  
+  // Keyboard navigation for chat history
+  const chatHistoryRef = useRef<HTMLElement>(null);
+  const { handleKeyDown, updateItems } = useKeyboardNavigation(
+    chatHistoryRef,
+    '[role="button"]',
+    'vertical'
+  );
 
   const {
-    createSession,
+    currentSession,
+
+    isLoadingSessions,
+    createNewSession,
+    loadSession,
+    updateSessionTitle,
     deleteSession,
-    renameSession,
     searchSessions,
-  } = useChatSessions();
+    initializeStore,
+  } = useChatStore();
+
+  // Initialize store on mount
+  useEffect(() => {
+    initializeStore();
+  }, [initializeStore]);
 
 
 
   // Filter sessions based on search query
-  const filteredSessions = searchSessions(searchQuery);
+  const filteredSessions = searchSessions(searchQuery) || [];
+
+  // Update keyboard navigation when sessions change
+  useEffect(() => {
+    updateItems();
+  }, [filteredSessions, updateItems]);
 
   const handleNewChat = () => {
     setShowNewChatModal(true);
   };
 
-  const handleCreateNewChat = (provider: string, model: string) => {
-    const newSessionId = createSession(provider, model);
-    onNewChat(provider, model);
-    onSessionSelect(newSessionId);
+  const handleCreateNewChat = (provider: LLMProvider, model: string) => {
+    createNewSession(provider, model);
     setShowNewChatModal(false);
+  };
+
+  const handleSessionSelect = async (sessionId: string) => {
+    try {
+      await loadSession(sessionId);
+      onClose(); // Close sidebar on mobile after selecting session
+    } catch (error) {
+      console.error('Failed to load session:', error);
+    }
   };
 
   const handleRenameSession = (sessionId: string, currentTitle: string) => {
@@ -61,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleConfirmRename = () => {
     if (renameSessionId && newSessionTitle.trim()) {
-      renameSession(renameSessionId, newSessionTitle.trim());
+      updateSessionTitle(renameSessionId, newSessionTitle.trim());
       setShowRenameModal(false);
       setRenameSessionId('');
       setNewSessionTitle('');
@@ -85,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <nav className="flex flex-col h-full" role="navigation" aria-label={t('navigation.sidebar', 'Sidebar navigation')}>
         {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -96,9 +122,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             size="sm"
             className="lg:hidden"
             onClick={onClose}
-            aria-label={t('common.close', 'Close')}
+            aria-label={t('common.close', 'Close sidebar')}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </Button>
@@ -107,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Sidebar content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* New Chat Button */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
             <Button
               variant="primary"
               size="md"
@@ -124,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
             <Input
               placeholder={t('chat.searchHistory', 'Search chat history...')}
               value={searchQuery}
@@ -140,26 +166,42 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Chat History */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            <div className="p-3 sm:p-4">
+              <h2 
+                id="chat-history-heading"
+                className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3"
+              >
                 {t('chat.chatHistory', 'Chat History')}
               </h2>
               
-              {filteredSessions.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 px-3 py-2">
+              {isLoadingSessions ? (
+                <div className="flex items-center justify-center py-8" role="status" aria-live="polite">
+                  <Spinner size="sm" />
+                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                    {t('common.loading', 'Loading...')}
+                  </span>
+                </div>
+              ) : filteredSessions.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-3 py-2" role="status">
                   {searchQuery ? 
                     t('chat.noSearchResults', 'No matching conversations found') :
                     t('chat.noHistory', 'No chat history yet')
                   }
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div 
+                  ref={chatHistoryRef as React.RefObject<HTMLDivElement>}
+                  className="space-y-1" 
+                  role="list" 
+                  aria-labelledby="chat-history-heading"
+                  onKeyDown={handleKeyDown}
+                >
                   {filteredSessions.map((session) => (
                     <ChatHistoryItem
                       key={session.id}
                       session={session}
-                      isActive={currentSessionId === session.id}
-                      onClick={() => onSessionSelect(session.id)}
+                      isActive={currentSession?.id === session.id}
+                      onClick={() => handleSessionSelect(session.id)}
                       onRename={() => handleRenameSession(session.id, session.title)}
                       onDelete={() => handleDeleteSession(session.id)}
                     />
@@ -170,7 +212,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Sidebar footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
             {/* Settings Link */}
             <div className="mb-3">
               <Link
@@ -193,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* New Chat Modal */}
       <NewChatModal

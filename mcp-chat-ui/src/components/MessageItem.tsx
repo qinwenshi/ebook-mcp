@@ -39,7 +39,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   const formatTimestamp = (timestamp: Date) => {
     const now = new Date();
-    const messageDate = new Date(timestamp);
+    const messageDate = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    
+    // Check if the date is valid
+    if (isNaN(messageDate.getTime())) {
+      return 'Unknown time';
+    }
+    
     const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
@@ -59,30 +65,30 @@ const MessageItem: React.FC<MessageItemProps> = ({
     switch (message.role) {
       case 'user':
         return (
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+          <div className="w-full h-full bg-blue-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">
             U
           </div>
         );
       case 'assistant':
         return (
-          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center text-white">
+            <svg className="w-3 h-3 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
         );
       case 'tool':
         return (
-          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-full h-full bg-purple-500 rounded-full flex items-center justify-center text-white">
+            <svg className="w-3 h-3 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             </svg>
           </div>
         );
       case 'system':
         return (
-          <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-full h-full bg-gray-500 rounded-full flex items-center justify-center text-white">
+            <svg className="w-3 h-3 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -110,15 +116,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   return (
     <div
-      className={`group relative flex gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+      className={`group relative flex gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
         message.role === 'user' ? 'flex-row-reverse' : ''
       }`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar */}
-      <div className="flex-shrink-0">
-        {getMessageIcon()}
+      <div className="flex-shrink-0 mt-1">
+        <div className="w-6 h-6 sm:w-8 sm:h-8">
+          {getMessageIcon()}
+        </div>
       </div>
 
       {/* Message content */}
@@ -222,7 +230,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
         {/* Actions */}
         {showActions && (
-          <div className={`absolute top-2 ${message.role === 'user' ? 'left-2' : 'right-2'} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+          <div className={`absolute top-1 sm:top-2 ${message.role === 'user' ? 'left-1 sm:left-2' : 'right-1 sm:right-2'} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
             <Tooltip content={copied ? t('common.success') : t('chat.copyMessage')}>
               <Button
                 variant="ghost"

@@ -6,8 +6,7 @@ import type {
   MCPServerConfig, 
   UserPreferences,
   Theme,
-  Language,
-  LLMProvider
+  Language
 } from '../types';
 
 interface SettingsStore {
@@ -25,7 +24,8 @@ interface SettingsStore {
   updateLLMProvider: (id: string, config: Partial<LLMProviderConfig>) => void;
   removeLLMProvider: (id: string) => void;
   toggleLLMProvider: (id: string) => void;
-  testLLMConnection: (id: string) => Promise<boolean>;
+  // Note: Connection testing is now handled by the backend API
+  testLLMConnection: (id: string, apiKey?: string) => Promise<boolean>;
   
   // Actions for MCP servers
   addMCPServer: (config: Omit<MCPServerConfig, 'id' | 'status'>) => void;
@@ -50,13 +50,36 @@ interface SettingsStore {
 
 // Default settings
 const defaultSettings: Settings = {
-  llmProviders: [],
+  llmProviders: [
+    {
+      id: 'default-openai',
+      name: 'openai',
+      apiKey: '', // User needs to configure this
+      baseUrl: 'https://api.openai.com/v1',
+      models: [
+        { id: 'gpt-4o', name: 'GPT-4o', supportsToolCalling: true, maxTokens: 128000 },
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', supportsToolCalling: true, maxTokens: 128000 },
+        { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', supportsToolCalling: true, maxTokens: 128000 },
+        { id: 'gpt-4', name: 'GPT-4', supportsToolCalling: true, maxTokens: 8192 },
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', supportsToolCalling: true, maxTokens: 16385 },
+      ],
+      enabled: false, // Disabled until API key is configured
+    },
+  ],
   mcpServers: [],
   preferences: {
     theme: 'system',
     language: 'en',
     autoScroll: true,
     soundEnabled: false,
+    accessibility: {
+      highContrast: false,
+      reducedMotion: false,
+      screenReaderAnnouncements: true,
+      keyboardNavigation: true,
+      focusVisible: true,
+      largeText: false,
+    },
   },
 };
 
@@ -65,28 +88,8 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-// Encrypt/decrypt functions for API keys (basic implementation)
-const encryptApiKey = (apiKey: string): string => {
-  if (!apiKey) return '';
-  try {
-    // In a real implementation, use proper encryption
-    // For now, just base64 encode (NOT secure, just for demo)
-    return btoa(apiKey);
-  } catch (error) {
-    console.warn('Failed to encrypt API key:', error);
-    return apiKey;
-  }
-};
-
-const decryptApiKey = (encryptedKey: string): string => {
-  if (!encryptedKey) return '';
-  try {
-    return atob(encryptedKey);
-  } catch (error) {
-    console.warn('Failed to decrypt API key:', error);
-    return encryptedKey; // Return as-is if decryption fails
-  }
-};
+// Note: API Keys are now stored securely in the backend
+// Frontend only handles temporary API key input for immediate use
 
 // Storage utilities
 const STORAGE_KEY = 'mcp-chat-ui-settings';
@@ -98,12 +101,12 @@ const saveToStorage = (settings: Settings): void => {
       throw new Error('Invalid settings object');
     }
 
-    // Encrypt API keys before storing
+    // Remove API keys before storing - they are now stored securely in backend
     const settingsToStore = {
       ...settings,
       llmProviders: (settings.llmProviders || []).map(provider => ({
         ...provider,
-        apiKey: encryptApiKey(provider.apiKey || ''),
+        apiKey: '', // Don't store API keys in frontend localStorage
       })),
     };
     
@@ -128,14 +131,14 @@ const loadFromStorage = (): Settings => {
       return { ...defaultSettings };
     }
     
-    // Decrypt API keys after loading and merge with defaults
+    // Load settings without API keys (they are stored securely in backend)
     const settings: Settings = {
       ...defaultSettings,
       ...parsed,
       llmProviders: (parsed.llmProviders || []).map((provider: any) => ({
         id: provider.id || generateId(),
         name: provider.name || 'openai',
-        apiKey: decryptApiKey(provider.apiKey || ''),
+        apiKey: '', // API keys are not stored in frontend
         baseUrl: provider.baseUrl,
         models: provider.models || [],
         enabled: provider.enabled !== false, // Default to true
@@ -185,12 +188,14 @@ export const useSettingsStore = create<SettingsStore>()(
       },
       
       updateLLMProvider: (id, config) => {
+        console.log('🔧 updateLLMProvider called:', { id, config });
         set((state) => ({
           llmProviders: state.llmProviders.map(provider =>
             provider.id === id ? { ...provider, ...config } : provider
           ),
         }));
         
+        console.log('💾 Calling saveSettings after updateLLMProvider');
         get().saveSettings();
       },
       
@@ -212,15 +217,9 @@ export const useSettingsStore = create<SettingsStore>()(
         get().saveSettings();
       },
       
-      testLLMConnection: async (id) => {
-        const provider = get().llmProviders.find(p => p.id === id);
-        if (!provider) throw new Error('Provider not found');
-        
-        const result = await testLLMProviderConnection(provider);
-        if (!result.success && result.error) {
-          throw new Error(result.error);
-        }
-        return result.success;
+      // Note: Connection testing is now handled by the backend API
+      testLLMConnection: async (_id, _apiKey) => {
+        throw new Error('Connection testing should use the backend API endpoint');
       },
       
       // MCP Server actions
@@ -286,62 +285,227 @@ export const useSettingsStore = create<SettingsStore>()(
       
       // Preferences actions
       updatePreferences: (preferences) => {
-        set((state) => ({
-          preferences: { ...state.preferences, ...preferences },
-        }));
+        // Separate theme and language from other preferences
+        const { theme, language, ...otherPreferences } = preferences;
         
-        get().saveSettings();
+        // Update non-theme/language preferences in store
+        if (Object.keys(otherPreferences).length > 0) {
+          set((state) => ({
+            preferences: { ...state.preferences, ...otherPreferences },
+          }));
+          get().saveSettings();
+        }
+        
+        // Handle theme and language separately (they are stored in localStorage)
+        if (theme) {
+          localStorage.setItem('mcp-chat-ui-theme', theme);
+          applyThemeToDocument(theme);
+        }
+        
+        if (language) {
+          localStorage.setItem('mcp-chat-ui-language', language);
+          updateI18nLanguage(language);
+        }
       },
       
       changeLanguage: (language) => {
-        set((state) => ({
-          preferences: { ...state.preferences, language },
-        }));
+        // Store language in localStorage (browser-specific)
+        localStorage.setItem('mcp-chat-ui-language', language);
         
         // Update i18n language immediately
         updateI18nLanguage(language);
         
-        get().saveSettings();
+        // Update store state for UI consistency but don't save to backend
+        set((state) => ({
+          preferences: { ...state.preferences, language },
+        }));
       },
       
       changeTheme: (theme) => {
-        set((state) => ({
-          preferences: { ...state.preferences, theme },
-        }));
+        // Store theme in localStorage (browser-specific)
+        localStorage.setItem('mcp-chat-ui-theme', theme);
         
         // Apply theme immediately
         applyThemeToDocument(theme);
         
-        get().saveSettings();
+        // Update store state for UI consistency but don't save to backend
+        set((state) => ({
+          preferences: { ...state.preferences, theme },
+        }));
       },
       
       // General actions
       loadSettings: async () => {
+        console.log('📥 loadSettings called - loading from backend');
         set({ isLoading: true });
         
         try {
-          const settings = loadFromStorage();
-          set({ ...settings, isLoading: false });
+          // Load API keys and MCP servers from backend configuration
+          const response = await fetch('/api/settings');
+          if (response.ok) {
+            const backendSettings = await response.json();
+            console.log('📊 Backend settings loaded:', backendSettings);
+            
+            // Load theme and language from localStorage (browser-specific)
+            const savedTheme = localStorage.getItem('mcp-chat-ui-theme') as Theme || 'system';
+            const savedLanguage = localStorage.getItem('mcp-chat-ui-language') as Language || 'en';
+            
+            // Merge backend settings with browser preferences
+            set({
+              llmProviders: backendSettings.llmProviders || defaultSettings.llmProviders,
+              mcpServers: backendSettings.mcpServers || defaultSettings.mcpServers,
+              preferences: {
+                ...defaultSettings.preferences,
+                ...backendSettings.preferences,
+                theme: savedTheme, // Override with browser preference
+                language: savedLanguage, // Override with browser preference
+              },
+            });
+          } else {
+            console.warn('Failed to load settings from backend, using local storage');
+            // Fallback to local storage if backend is not available
+            const localSettings = loadFromStorage();
+            
+            // Still load theme and language from localStorage
+            const savedTheme = localStorage.getItem('mcp-chat-ui-theme') as Theme || 'system';
+            const savedLanguage = localStorage.getItem('mcp-chat-ui-language') as Language || 'en';
+            
+            set({
+              ...localSettings,
+              preferences: {
+                ...localSettings.preferences,
+                theme: savedTheme,
+                language: savedLanguage,
+              },
+            });
+          }
           
-          // Apply theme after loading
-          get().changeTheme(settings.preferences.theme);
+          // Apply theme and language after loading
+          const currentState = get();
+          applyThemeToDocument(currentState.preferences.theme);
+          await updateI18nLanguage(currentState.preferences.language);
+          
+          set({ isLoading: false });
         } catch (error) {
-          console.error('Failed to load settings:', error);
+          console.error('Failed to load settings from backend:', error);
+          // Fallback to local storage
+          const localSettings = loadFromStorage();
+          
+          // Still load theme and language from localStorage
+          const savedTheme = localStorage.getItem('mcp-chat-ui-theme') as Theme || 'system';
+          const savedLanguage = localStorage.getItem('mcp-chat-ui-language') as Language || 'en';
+          
+          set({
+            ...localSettings,
+            preferences: {
+              ...localSettings.preferences,
+              theme: savedTheme,
+              language: savedLanguage,
+            },
+          });
+          
+          // Apply theme and language
+          applyThemeToDocument(savedTheme);
+          await updateI18nLanguage(savedLanguage);
+          
           set({ isLoading: false });
         }
       },
       
       saveSettings: async () => {
+        console.log('💾 saveSettings called - saving to backend');
         set({ isSaving: true });
         
         try {
-          const { isLoading, isSaving, ...settings } = get();
-          saveToStorage(settings);
+          const state = get();
+          
+          // Filter out providers with empty or masked API keys to avoid validation errors
+          const filteredProviders = state.llmProviders.map(provider => {
+            const apiKey = provider.apiKey;
+            // Skip validation for empty, masked, or placeholder API keys
+            if (!apiKey || 
+                apiKey.includes('•') || 
+                apiKey.includes('*') || 
+                apiKey.trim() === '' ||
+                apiKey === '••••') {
+              return {
+                ...provider,
+                apiKey: '', // Send empty string instead of masked value
+              };
+            }
+            return provider;
+          });
+          
+          // Explicitly extract only the data fields we want to send
+          // Exclude theme and language from backend storage (they are browser-specific)
+          const { theme, language, ...backendPreferences } = state.preferences;
+          
+          const settings = {
+            llmProviders: filteredProviders,
+            mcpServers: state.mcpServers,
+            preferences: backendPreferences, // Only save non-browser-specific preferences
+          };
+          
+          // Debug: Log the data being sent (but mask API keys in logs)
+          const logSettings = {
+            ...settings,
+            llmProviders: settings.llmProviders.map(p => ({
+              ...p,
+              apiKey: p.apiKey ? '***masked***' : '(empty)'
+            }))
+          };
+          console.log('📤 Sending settings to backend:', JSON.stringify(logSettings, null, 2));
+          
+          // Save to backend API (backend will handle API key encryption)
+          const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings),
+          });
+          
+          if (response.ok) {
+            const savedSettings = await response.json();
+            console.log('✅ Settings saved to backend');
+            
+            // Update local state with backend response (API keys will be masked)
+            set({
+              llmProviders: savedSettings.llmProviders || settings.llmProviders,
+              mcpServers: savedSettings.mcpServers || settings.mcpServers,
+              preferences: savedSettings.preferences || settings.preferences,
+            });
+            
+            // Also save to local storage as backup (without API keys)
+            saveToStorage(settings);
+          } else {
+            // Get detailed error information
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+              const errorData = await response.json();
+              if (errorData.message) {
+                errorMessage = errorData.message;
+              }
+              console.error('❌ Backend error details:', errorData);
+            } catch (e) {
+              console.error('❌ Failed to parse error response');
+            }
+            throw new Error(`Failed to save settings to backend: ${errorMessage}`);
+          }
+          
           set({ isSaving: false });
         } catch (error) {
           console.error('Failed to save settings:', error);
+          // Fallback to local storage (without API keys)
+          const state = get();
+          const settings = {
+            llmProviders: state.llmProviders,
+            mcpServers: state.mcpServers,
+            preferences: state.preferences,
+          };
+          saveToStorage(settings);
           set({ isSaving: false });
-          throw error; // Re-throw to allow UI to show error
+          throw error;
         }
       },
       
@@ -351,7 +515,12 @@ export const useSettingsStore = create<SettingsStore>()(
       },
       
       exportSettings: () => {
-        const { isLoading, isSaving, ...settings } = get();
+        const state = get();
+        const settings = {
+          llmProviders: state.llmProviders,
+          mcpServers: state.mcpServers,
+          preferences: state.preferences,
+        };
         return JSON.stringify(settings, null, 2);
       },
       
@@ -385,7 +554,7 @@ export const useSettingsStore = create<SettingsStore>()(
             llmProviders: settings.llmProviders.map((provider: any) => ({
               id: provider.id || generateId(),
               name: provider.name || 'openai',
-              apiKey: provider.apiKey || '',
+              apiKey: '', // API keys are not imported/stored in frontend
               baseUrl: provider.baseUrl,
               models: Array.isArray(provider.models) ? provider.models : [],
               enabled: provider.enabled !== false,
@@ -443,6 +612,23 @@ export const useSettingsStore = create<SettingsStore>()(
         mcpServers: state.mcpServers,
         preferences: state.preferences,
       }),
+
+      // Ensure restored data is valid
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Ensure arrays exist
+          if (!Array.isArray(state.llmProviders)) {
+            state.llmProviders = [];
+          }
+          if (!Array.isArray(state.mcpServers)) {
+            state.mcpServers = [];
+          }
+          // Ensure preferences exist
+          if (!state.preferences) {
+            state.preferences = defaultSettings.preferences;
+          }
+        }
+      },
     }
   )
 );
@@ -485,71 +671,9 @@ export const importMCPServersFromJSON = (mcpConfigJson: string): MCPServerConfig
   }
 };
 
-// Default base URLs for each provider (moved here to be accessible)
-const TEST_DEFAULT_BASE_URLS: Record<LLMProvider, string> = {
-  openai: 'https://api.openai.com/v1',
-  deepseek: 'https://api.deepseek.com/v1',
-  openrouter: 'https://openrouter.ai/api/v1',
-};
+// Note: Default base URLs are now handled by the backend
 
-// Test LLM provider connection
-export const testLLMProviderConnection = async (provider: LLMProviderConfig): Promise<{ success: boolean; error?: string }> => {
-  if (!provider.apiKey) {
-    return { success: false, error: 'API key is required' };
-  }
-
-  const baseUrl = provider.baseUrl || TEST_DEFAULT_BASE_URLS[provider.name];
-  
-  try {
-    // Create a minimal test request based on provider type
-    const testPayload = {
-      model: provider.models[0]?.id || getDefaultModelForProvider(provider.name),
-      messages: [{ role: 'user', content: 'Hello' }],
-      max_tokens: 5,
-      temperature: 0,
-    };
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Set authorization header based on provider
-    if (provider.name === 'openai' || provider.name === 'deepseek') {
-      headers['Authorization'] = `Bearer ${provider.apiKey}`;
-    } else if (provider.name === 'openrouter') {
-      headers['Authorization'] = `Bearer ${provider.apiKey}`;
-      headers['HTTP-Referer'] = window.location.origin;
-      headers['X-Title'] = 'MCP Chat UI';
-    }
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(testPayload),
-    });
-
-    if (response.ok) {
-      return { success: true };
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-      return { success: false, error: errorMessage };
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
-    return { success: false, error: errorMessage };
-  }
-};
-
-// Helper function to get default model for provider
-const getDefaultModelForProvider = (provider: LLMProvider): string => {
-  const defaultModels: Record<LLMProvider, string> = {
-    openai: 'gpt-3.5-turbo',
-    deepseek: 'deepseek-chat',
-    openrouter: 'openai/gpt-3.5-turbo',
-  };
-  return defaultModels[provider];
-};
+// Note: Connection testing is now handled by the backend API
 
 // Theme application utility
 let systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
@@ -566,16 +690,20 @@ const applyThemeToDocument = (theme: Theme) => {
   
   if (theme === 'dark') {
     root.classList.add('dark');
+    console.log('🌙 Applied dark theme');
   } else if (theme === 'light') {
     root.classList.remove('dark');
+    console.log('☀️ Applied light theme');
   } else {
     // System theme
     const applySystemTheme = () => {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) {
         root.classList.add('dark');
+        console.log('🌙 Applied system dark theme');
       } else {
         root.classList.remove('dark');
+        console.log('☀️ Applied system light theme');
       }
     };
     
@@ -606,13 +734,22 @@ const updateI18nLanguage = async (language: Language) => {
 // Initialize settings on app start
 export const initializeSettings = async () => {
   const store = useSettingsStore.getState();
-  await store.loadSettings();
   
-  // Apply the current theme after loading settings
-  const currentTheme = store.preferences.theme;
-  applyThemeToDocument(currentTheme);
+  // Set loading state to prevent unnecessary saves during initialization
+  useSettingsStore.setState({ isLoading: true });
   
-  // Apply the current language after loading settings
-  const currentLanguage = store.preferences.language;
-  await updateI18nLanguage(currentLanguage);
+  try {
+    await store.loadSettings();
+    
+    // Apply the current theme after loading settings
+    const currentTheme = store.preferences.theme;
+    applyThemeToDocument(currentTheme);
+    
+    // Apply the current language after loading settings
+    const currentLanguage = store.preferences.language;
+    await updateI18nLanguage(currentLanguage);
+  } finally {
+    // Mark initialization as complete
+    useSettingsStore.setState({ isLoading: false });
+  }
 };
