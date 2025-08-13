@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Any, Optional
 import os
 import logging
 
@@ -144,7 +144,7 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
     
 
 
-def extract_chapter_from_epub(epub_path, anchor_href):
+def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
     """
     Extract complete HTML content of a chapter starting from the specified anchor point until the next TOC entry.
     
@@ -191,12 +191,12 @@ def extract_chapter_from_epub(epub_path, anchor_href):
     return '\n'.join(extracted)
 
 
-def read_epub(epub_path):
+def read_epub(epub_path: str) -> Any:
     return epub.read_epub(epub_path)
 
-def flatten_toc(book):
+def flatten_toc(book: Any) -> List[str]:
     toc_list = []
-    def _flatten(toc):
+    def _flatten(toc: Any) -> None:
         for item in toc:
             if isinstance(item, tuple):
                 link, children = item
@@ -209,20 +209,20 @@ def flatten_toc(book):
     _flatten(book.toc)
     return toc_list
 
-def extract_chapter_plain_text(book, anchor_href):
+def extract_chapter_plain_text(book: Any, anchor_href: str) -> str:
     html = extract_chapter_html(book, anchor_href)
     soup = BeautifulSoup(html, 'html.parser')
     return soup.get_text()
 
 
 
-def convert_html_to_markdown(html_str):
+def convert_html_to_markdown(html_str: str) -> str:
     h = html2text.HTML2Text()
     h.ignore_links = False
     h.ignore_images = False
     return h.handle(html_str)
 
-def clean_html(html_str):
+def clean_html(html_str: str) -> str:
     """
     Clean HTML content:
     - Remove unnecessary tags like <img>, <script>, <style>, <svg>, <video>, <iframe>, <nav>
@@ -251,7 +251,7 @@ def clean_html(html_str):
 
 
 
-def extract_chapter_html(book, anchor_href):
+def extract_chapter_html(book: Any, anchor_href: str) -> str:
     """
     Extract chapter HTML content with improved logic to handle subchapters correctly.
     This function fixes the issue where subchapters in the TOC cause premature truncation
@@ -332,13 +332,13 @@ def extract_chapter_html(book, anchor_href):
     return clean_html(html)
 
 
-def extract_chapter_markdown(book, anchor_href):
+def extract_chapter_markdown(book: Any, anchor_href: str) -> str:
     """Fixed version of extract_chapter_markdown using extract_chapter_html"""
     html = extract_chapter_html(book, anchor_href)
     return convert_html_to_markdown(html)
 
 
-def extract_multiple_chapters(book, anchor_list, output='html'):
+def extract_multiple_chapters(book: Any, anchor_list: List[str], output: str = 'html') -> List[Tuple[str, str]]:
     """Extract multiple chapters using improved extract_chapter_html logic"""
     results = []
     for href in anchor_list:
