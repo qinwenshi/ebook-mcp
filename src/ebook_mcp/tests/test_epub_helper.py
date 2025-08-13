@@ -21,13 +21,12 @@ except ImportError:
 
 from ebook_mcp.tools.epub_helper import (
     get_all_epub_files,
-    get_toc,
     get_meta,
+    get_toc,
     read_epub,
     flatten_toc,
     extract_chapter_html,
     extract_chapter_plain_text,
-    extract_chapter_markdown,
     extract_multiple_chapters,
     convert_html_to_markdown,
     clean_html
@@ -293,24 +292,6 @@ class TestEpubHelper:
         assert "<p>" not in result
         assert "Title" in result
         assert "Content" in result
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
-    def test_extract_chapter_markdown(self, mock_extract_html):
-        """Test extract_chapter_markdown function"""
-        mock_extract_html.return_value = "<h1>Title</h1><p>This is <strong>bold</strong> text.</p>"
-        
-        mock_book = Mock()
-        # 设置 TOC 包含测试的章节
-        mock_chapter1 = Mock()
-        mock_chapter1.href = "chapter1"
-        mock_book.toc = [mock_chapter1]
-        
-        result = extract_chapter_markdown(mock_book, "chapter1")
-        
-        mock_extract_html.assert_called_once_with(mock_book, "chapter1")
-        # Should convert to markdown
-        assert "# Title" in result
-        assert "**bold**" in result
     
     @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
     def test_extract_multiple_chapters_html(self, mock_extract_html):

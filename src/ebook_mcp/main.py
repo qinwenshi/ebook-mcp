@@ -63,41 +63,21 @@ def get_epub_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
 
 @mcp.tool()
 def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
-    """Get toc of a given ebook.
+    """Get table of contents of a given EPUB file.
 
     Args:
         epub_path: Full path to the ebook file.eg. "/Users/macbook/Downloads/test.epub"
     
     Returns:
-        List[Tuple[str, str]]: Return a list，Each element is a Tuple，contain (Chapter tile, chapter link)
+        List[Tuple[str, str]]: List of TOC entries, each entry is a tuple of (title, href)
 
     Raises:
-        FileNotFoundError: Raises when the epub file not found
-        Exception: Raisers when running into parsing error of epub file
+        FileNotFoundError: Raises when the EPUB file not found
+        Exception: Raisers when running into parsing error of EPUB file
     """
     logger.debug(f"calling get_epub_toc: {epub_path}")
     try:
         return epub_helper.get_toc(epub_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
-
-@mcp.tool()
-def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
-    """⚠️ DEPRECATED: This tool has a known issue when processing EPUB files with subchapters.
-    When the TOC contains subchapters, it may prematurely truncate chapter content and only return the chapter title.
-
-    It is recommended to use get_epub_chapter_markdown_fixed for more accurate chapter extraction results.
-
-    Args:
-        epub_path: Full path to the ebook file.eg. "/Users/macbook/Downloads/test.epub"
-        chapter_id: Chapter id of the chapter to get content
-    """
-    logger.debug(f"calling get_epub_chapter_markdown: {epub_path}, chapter ID: {chapter_id}")
-    try:
-        book = epub_helper.read_epub(epub_path)
-        return epub_helper.extract_chapter_markdown(book, chapter_id)
     except FileNotFoundError as e:
         raise FileNotFoundError(str(e))
     except Exception as e:

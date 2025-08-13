@@ -21,7 +21,6 @@ from ebook_mcp.main import (
     get_all_epub_files,
     get_epub_metadata,
     get_epub_toc,
-    get_epub_chapter_markdown,
     get_all_pdf_files,
     get_pdf_metadata,
     get_pdf_toc,
@@ -102,27 +101,6 @@ class TestEpubFunctions:
         
         with pytest.raises(FileNotFoundError):
             get_epub_toc("/path/to/nonexistent.epub")
-    
-    @patch('ebook_mcp.main.epub_helper.read_epub')
-    @patch('ebook_mcp.main.epub_helper.extract_chapter_markdown')
-    def test_get_epub_chapter_markdown_success(self, mock_extract, mock_read):
-        """Test get_epub_chapter_markdown successful case"""
-        mock_book = Mock()
-        mock_read.return_value = mock_book
-        mock_extract.return_value = "# Chapter Content\n\nThis is chapter content."
-        
-        result = get_epub_chapter_markdown("/path/to/test.epub", "chapter1")
-        assert result == "# Chapter Content\n\nThis is chapter content."
-        mock_read.assert_called_once_with("/path/to/test.epub")
-        mock_extract.assert_called_once_with(mock_book, "chapter1")
-    
-    @patch('ebook_mcp.main.epub_helper.read_epub')
-    def test_get_epub_chapter_markdown_file_not_found(self, mock_read):
-        """Test get_epub_chapter_markdown with file not found"""
-        mock_read.side_effect = FileNotFoundError("File not found")
-        
-        with pytest.raises(FileNotFoundError):
-            get_epub_chapter_markdown("/path/to/nonexistent.epub", "chapter1")
 
 
 class TestPdfFunctions:

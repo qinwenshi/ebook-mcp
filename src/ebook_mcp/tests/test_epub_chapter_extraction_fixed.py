@@ -21,7 +21,6 @@ if DEPENDENCIES_AVAILABLE:
         extract_chapter_html_fixed,
         extract_chapter_html,  # 原函数用于对比
         extract_chapter_markdown_fixed,
-        extract_chapter_markdown,  # 原函数用于对比
         clean_html,
         convert_html_to_markdown
     )
