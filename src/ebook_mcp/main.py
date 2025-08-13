@@ -1,5 +1,6 @@
 import os
-from typing import Any,List,Dict,Union,Tuple
+from typing import Any,List,Dict,Union,Tuple, Callable, TypeVar
+from functools import wraps
 from mcp.server.fastmcp import FastMCP
 from ebooklib import epub
 from pydantic import BaseModel
@@ -8,6 +9,41 @@ from ebook_mcp.tools import epub_helper, pdf_helper
 import logging
 from datetime import datetime
 from ebook_mcp.tools.logger_config import setup_logger  # Import logger config
+
+# Type variable for generic function return type
+T = TypeVar('T')
+
+def handle_mcp_errors(func: Callable[..., T]) -> Callable[..., T]:
+    """
+    Decorator to handle common MCP tool errors uniformly.
+    
+    This decorator catches FileNotFoundError and other exceptions,
+    re-raises them with consistent error messages.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> T:
+        try:
+            return func(*args, **kwargs)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(str(e))
+        except Exception as e:
+            raise Exception(str(e))
+    return wrapper
+
+def handle_pdf_errors(func: Callable[..., T]) -> Callable[..., T]:
+    """
+    Decorator to handle PDF-specific errors.
+    
+    Some PDF functions don't need FileNotFoundError handling
+    as they handle it internally.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> T:
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            raise Exception(str(e))
+    return wrapper
 
 
 log_dir = "logs"
@@ -33,12 +69,14 @@ mcp = FastMCP("ebook-MCP")
 
 # EPUB related tools
 @mcp.tool()
+@handle_mcp_errors
 def get_all_epub_files(path: str) -> List[str]:
     """Get all epub files in a given path.
     """
     return epub_helper.get_all_epub_files(path)
 
 @mcp.tool()
+@handle_mcp_errors
 def get_epub_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
     """Get metadata of a given ebook.
 
@@ -53,15 +91,11 @@ def get_epub_metadata(epub_path:str) -> Dict[str, Union[str, List[str]]]:
         Exception: Raisers when running into parsing error of epub file
     """
     logger.debug(f"Getting ebook metadata: {epub_path}")
-    try:
-        return epub_helper.get_meta(epub_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
+    return epub_helper.get_meta(epub_path)
 
 
 @mcp.tool()
+@handle_mcp_errors
 def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
     """Get table of contents of a given EPUB file.
 
@@ -76,14 +110,10 @@ def get_epub_toc(epub_path: str) -> List[Tuple[str, str]]:
         Exception: Raisers when running into parsing error of EPUB file
     """
     logger.debug(f"calling get_epub_toc: {epub_path}")
-    try:
-        return epub_helper.get_toc(epub_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
+    return epub_helper.get_toc(epub_path)
 
 @mcp.tool()
+@handle_mcp_errors
 def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
     """Get content of a given chapter using the improved extraction method.
     
@@ -102,24 +132,21 @@ def get_epub_chapter_markdown(epub_path:str, chapter_id: str) -> str:
         str: Chapter content in markdown format
     """
     logger.debug(f"calling get_epub_chapter_markdown: {epub_path}, chapter ID: {chapter_id}")
-    try:
-        book = epub_helper.read_epub(epub_path)
-        
-        # Use the improved version
-        return epub_helper.extract_chapter_markdown(book, chapter_id)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
+    book = epub_helper.read_epub(epub_path)
+    
+    # Use the improved version
+    return epub_helper.extract_chapter_markdown(book, chapter_id)
 
 # PDF related tools
 @mcp.tool()
+@handle_mcp_errors
 def get_all_pdf_files(path: str) -> List[str]:
     """Get all PDF files in a given path.
     """
     return pdf_helper.get_all_pdf_files(path)
 
 @mcp.tool()
+@handle_mcp_errors
 def get_pdf_metadata(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
     """Get metadata of a given PDF file.
 
@@ -134,14 +161,10 @@ def get_pdf_metadata(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         Exception: Raisers when running into parsing error of PDF file
     """
     logger.debug(f"calling get_pdf_metadata: {pdf_path}")
-    try:
-        return pdf_helper.get_meta(pdf_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
+    return pdf_helper.get_meta(pdf_path)
 
 @mcp.tool()
+@handle_mcp_errors
 def get_pdf_toc(pdf_path: str) -> List[Tuple[str, int]]:
     """Get table of contents of a given PDF file.
 
@@ -156,14 +179,10 @@ def get_pdf_toc(pdf_path: str) -> List[Tuple[str, int]]:
         Exception: Raisers when running into parsing error of PDF file
     """
     logger.debug(f"calling get_pdf_toc: {pdf_path}")
-    try:
-        return pdf_helper.get_toc(pdf_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
-    except Exception as e:
-        raise Exception(str(e))
+    return pdf_helper.get_toc(pdf_path)
 
 @mcp.tool()
+@handle_pdf_errors
 def get_pdf_page_text(pdf_path: str, page_number: int) -> str:
     """Get text content of a specific page in PDF file.
 
@@ -175,12 +194,10 @@ def get_pdf_page_text(pdf_path: str, page_number: int) -> str:
         str: Extracted text content
     """
     logger.debug(f"calling get_pdf_page_text: {pdf_path}, page: {page_number}")
-    try:
-        return pdf_helper.extract_page_text(pdf_path, page_number)
-    except Exception as e:
-        raise Exception(str(e))
+    return pdf_helper.extract_page_text(pdf_path, page_number)
 
 @mcp.tool()
+@handle_pdf_errors
 def get_pdf_page_markdown(pdf_path: str, page_number: int) -> str:
     """Get markdown formatted content of a specific page in PDF file.
 
@@ -192,12 +209,10 @@ def get_pdf_page_markdown(pdf_path: str, page_number: int) -> str:
         str: Markdown formatted text
     """
     logger.debug(f"calling get_pdf_page_markdown: {pdf_path}, page: {page_number}")
-    try:
-        return pdf_helper.extract_page_markdown(pdf_path, page_number)
-    except Exception as e:
-        raise Exception(str(e))
+    return pdf_helper.extract_page_markdown(pdf_path, page_number)
 
 @mcp.tool()
+@handle_pdf_errors
 def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, List[int]]:
     """Get content of a specific chapter in PDF file by its title.
 
@@ -209,10 +224,7 @@ def get_pdf_chapter_content(pdf_path: str, chapter_title: str) -> Tuple[str, Lis
         Tuple[str, List[int]]: Tuple containing (chapter_content, page_numbers)
     """
     logger.debug(f"calling get_pdf_chapter_content: {pdf_path}, chapter: {chapter_title}")
-    try:
-        return pdf_helper.extract_chapter_by_title(pdf_path, chapter_title)
-    except Exception as e:
-        raise Exception(str(e))
+    return pdf_helper.extract_chapter_by_title(pdf_path, chapter_title)
 
 if __name__ == "__main__":
     # Initialize and run the server

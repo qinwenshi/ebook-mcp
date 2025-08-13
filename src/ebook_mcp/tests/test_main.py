@@ -250,3 +250,51 @@ class TestMainModule:
         cli_entry()
         
         mock_mcp_instance.run.assert_called_once_with(transport='stdio') 
+
+
+class TestDecorators:
+    """Test the error handling decorators"""
+    
+    def test_handle_mcp_errors_file_not_found(self):
+        """Test handle_mcp_errors decorator with FileNotFoundError"""
+        from ebook_mcp.main import handle_mcp_errors
+        
+        @handle_mcp_errors
+        def test_function():
+            raise FileNotFoundError("Test file not found")
+        
+        with pytest.raises(FileNotFoundError, match="Test file not found"):
+            test_function()
+    
+    def test_handle_mcp_errors_general_exception(self):
+        """Test handle_mcp_errors decorator with general exception"""
+        from ebook_mcp.main import handle_mcp_errors
+        
+        @handle_mcp_errors
+        def test_function():
+            raise ValueError("Test value error")
+        
+        with pytest.raises(Exception, match="Test value error"):
+            test_function()
+    
+    def test_handle_pdf_errors(self):
+        """Test handle_pdf_errors decorator"""
+        from ebook_mcp.main import handle_pdf_errors
+        
+        @handle_pdf_errors
+        def test_function():
+            raise ValueError("Test PDF error")
+        
+        with pytest.raises(Exception, match="Test PDF error"):
+            test_function()
+    
+    def test_decorator_preserves_return_value(self):
+        """Test that decorators preserve return values"""
+        from ebook_mcp.main import handle_mcp_errors
+        
+        @handle_mcp_errors
+        def test_function():
+            return "test result"
+        
+        result = test_function()
+        assert result == "test result" 
