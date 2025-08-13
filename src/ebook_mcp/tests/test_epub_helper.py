@@ -27,7 +27,7 @@ from ebook_mcp.tools.epub_helper import (
     flatten_toc,
     extract_chapter_html,
     extract_chapter_plain_text,
-    extract_multiple_chapters,
+
     convert_html_to_markdown,
     clean_html
 )
@@ -293,53 +293,4 @@ class TestEpubHelper:
         assert "Title" in result
         assert "Content" in result
     
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
-    def test_extract_multiple_chapters_html(self, mock_extract_html):
-        """Test extract_multiple_chapters with HTML output"""
-        mock_extract_html.return_value = "<h1>Chapter Content</h1>"
-        
-        mock_book = Mock()
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output='html')
-        
-        assert mock_extract_html.call_count == 2
-        assert len(result) == 2
-        assert all("<h1>Chapter Content</h1>" in content for content in result)
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
-    def test_extract_multiple_chapters_markdown(self, mock_extract_html):
-        """Test extract_multiple_chapters with markdown output"""
-        mock_extract_html.return_value = "<h1>Title</h1><p>Content</p>"
-        
-        mock_book = Mock()
-        # 设置 TOC 包含测试的章节
-        mock_chapter1 = Mock()
-        mock_chapter1.href = "chapter1"
-        mock_chapter2 = Mock()
-        mock_chapter2.href = "chapter2"
-        mock_book.toc = [mock_chapter1, mock_chapter2]
-        
-        # 设置 get_item_with_href 方法
-        mock_item = Mock()
-        mock_item.get_content.return_value = b"<html><body><h1>Test</h1></body></html>"
-        mock_book.get_item_with_href.return_value = mock_item
-        
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output='markdown')
-        
-        assert len(result) == 2
-        assert result[0][0] == "chapter1"
-        assert result[1][0] == "chapter2"
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_plain_text')
-    def test_extract_multiple_chapters_plain_text(self, mock_extract_plain):
-        """Test extract_multiple_chapters with plain text output"""
-        mock_extract_plain.return_value = "Chapter Content"
-        
-        mock_book = Mock()
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output="text")
-        
-        assert mock_extract_plain.call_count == 2
-        assert len(result) == 2
-        assert all("Chapter Content" in content for content in result) 
+ 

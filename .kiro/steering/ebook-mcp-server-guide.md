@@ -50,7 +50,8 @@ def tool_name(param: str) -> ReturnType:
 
 **EPUB Processing:**
 - Use `ebooklib` library exclusively
-- **CRITICAL:** Always use `get_epub_chapter_markdown_fixed` instead of `get_epub_chapter_markdown` (fixes truncation issues)
+- **CRITICAL:** 
+- Use `get_epub_chapter_markdown` (fixes truncation issues)
 - Convert all content to Markdown format
 - Handle missing TOC gracefully with fallback methods
 
