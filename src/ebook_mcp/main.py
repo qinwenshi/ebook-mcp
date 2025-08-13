@@ -26,6 +26,9 @@ def handle_mcp_errors(func: Callable[..., T]) -> Callable[..., T]:
             return func(*args, **kwargs)
         except FileNotFoundError as e:
             raise FileNotFoundError(str(e))
+        except (epub_helper.EpubProcessingError, pdf_helper.PdfProcessingError) as e:
+            # Re-raise custom exceptions as-is to preserve detailed error information
+            raise e
         except Exception as e:
             raise Exception(str(e))
     return wrapper

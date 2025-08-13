@@ -1,6 +1,25 @@
 from typing import List, Tuple, Dict, Union, Any, Optional
 import os
-import logging
+from .logger_config import get_logger, log_operation
+
+# Custom exception classes for better error handling
+class EpubProcessingError(Exception):
+    """Custom exception for EPUB processing errors with detailed context"""
+    def __init__(self, message: str, file_path: str, operation: str, original_error: Exception = None):
+        self.message = message
+        self.file_path = file_path
+        self.operation = operation
+        self.original_error = original_error
+        super().__init__(f"{message} (file: {file_path}, operation: {operation})")
+
+class PdfProcessingError(Exception):
+    """Custom exception for PDF processing errors with detailed context"""
+    def __init__(self, message: str, file_path: str, operation: str, original_error: Exception = None):
+        self.message = message
+        self.file_path = file_path
+        self.operation = operation
+        self.original_error = original_error
+        super().__init__(f"{message} (file: {file_path}, operation: {operation})")
 
 # Try to import optional dependencies
 try:
@@ -25,8 +44,8 @@ except ImportError:
     html2text = None
     HTML2TEXT_AVAILABLE = False
 
-# Initialize logger
-logger = logging.getLogger(__name__)
+# Initialize structured logger
+logger = get_logger(__name__)
 
 
 def get_all_epub_files(path: str) -> List[str]:
@@ -35,6 +54,7 @@ def get_all_epub_files(path: str) -> List[str]:
     """
     return [f for f in os.listdir(path) if f.endswith('.epub')]
 
+@log_operation("epub_toc_extraction")
 def get_toc(epub_path: str) -> List[Tuple[str, str]]:
     """
     Get the Table of Contents (TOC) from an EPUB file
@@ -51,11 +71,19 @@ def get_toc(epub_path: str) -> List[Tuple[str, str]]:
     """
     try:
         if not os.path.exists(epub_path):
-            logger.error(f"File not found: {epub_path}")
+            logger.error(
+                "EPUB file not found",
+                file_path=epub_path,
+                operation="toc_extraction"
+            )
             raise FileNotFoundError(f"EPUB file not found: {epub_path}")
             
         # Read EPUB file
-        logger.debug(f"Starting to read EPUB file: {epub_path}")
+        logger.debug(
+            "Starting EPUB TOC extraction",
+            file_path=epub_path,
+            operation="toc_extraction"
+        )
         book = epub.read_epub(epub_path)
         toc = []
         
@@ -76,14 +104,26 @@ def get_toc(epub_path: str) -> List[Tuple[str, str]]:
                 # Single level TOC item
                 toc.append((item.title, item.href))
         
-        logger.debug(f"Successfully retrieved TOC with {len(toc)} entries")
+        logger.info(
+            "EPUB TOC extraction completed",
+            file_path=epub_path,
+            operation="toc_extraction",
+            chapter_count=len(toc)
+        )
         return toc
     except FileNotFoundError:
         raise FileNotFoundError(f"EPUB file not found: {epub_path}")
     except Exception as e:
-        logger.error(f"Failed to parse EPUB file: {str(e)}")
-        raise Exception("Failed to parse EPUB file")
+        logger.error(
+            "Failed to parse EPUB file",
+            file_path=epub_path,
+            operation="toc_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise EpubProcessingError("Failed to parse EPUB file", epub_path, "toc_extraction", e)
 
+@log_operation("epub_metadata_extraction")
 def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     Get metadata from an EPUB file
@@ -100,11 +140,19 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     try:
         if not os.path.exists(epub_path):
-            logger.error(f"File not found: {epub_path}")
+            logger.error(
+                "EPUB file not found",
+                file_path=epub_path,
+                operation="metadata_extraction"
+            )
             raise FileNotFoundError(f"EPUB file not found: {epub_path}")
             
         # Read EPUB file
-        logger.debug(f"Starting to read EPUB file: {epub_path}")
+        logger.debug(
+            "Starting EPUB metadata extraction",
+            file_path=epub_path,
+            operation="metadata_extraction"
+        )
         book = epub.read_epub(epub_path)
         meta = {}
 
@@ -133,17 +181,29 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
             if items:
                 meta[field] = [item[0] for item in items]
 
-        logger.debug(f"Successfully retrieved metadata with fields: {list(meta.keys())}")
+        logger.info(
+            "EPUB metadata extraction completed",
+            file_path=epub_path,
+            operation="metadata_extraction",
+            metadata_fields=list(meta.keys())
+        )
         return meta
 
     except FileNotFoundError:
         raise FileNotFoundError(f"EPUB file not found: {epub_path}")
     except Exception as e:
-        logger.error(f"Failed to parse EPUB file: {str(e)}")
-        raise Exception("Failed to parse EPUB file")
+        logger.error(
+            "Failed to parse EPUB file",
+            file_path=epub_path,
+            operation="metadata_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise EpubProcessingError("Failed to parse EPUB file", epub_path, "metadata_extraction", e)
     
 
 
+@log_operation("epub_chapter_extraction")
 def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
     """
     Extract complete HTML content of a chapter starting from the specified anchor point until the next TOC entry.
@@ -155,7 +215,12 @@ def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
     Returns:
         HTML string (complete chapter content starting from the anchor point)
     """
-    logger.debug(f"Extracting chapter from EPUB: path= {epub_path} anchor_href= {anchor_href}")
+    logger.debug(
+        "Starting EPUB chapter extraction",
+        file_path=epub_path,
+        anchor_href=anchor_href,
+        operation="chapter_extraction"
+    )
     # Read EPUB file
     book = epub.read_epub(epub_path)
     # Parse input href and anchor id
@@ -165,12 +230,16 @@ def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
         href, anchor_id = anchor_href, None
     
     if anchor_id:
-        logger.debug(f"Anchor: {anchor_id}")
+        logger.debug(
+            "Processing anchor",
+            anchor_id=anchor_id,
+            operation="chapter_extraction"
+        )
 
     # Get current chapter XHTML content
     item = book.get_item_with_href(href)
     if item is None:
-        raise ValueError(f"File not found: {href}")
+        raise EpubProcessingError(f"Chapter file not found: {href}", epub_path, "chapter_extraction")
     
     soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
 
@@ -181,7 +250,7 @@ def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
     # Find anchor starting position
     anchor_elem = soup.find(id=anchor_id)
     if not anchor_elem:
-        raise ValueError(f"Anchor #{anchor_id} not found in file {href}")
+        raise EpubProcessingError(f"Anchor #{anchor_id} not found in file {href}", epub_path, "anchor_extraction")
 
     # Extract all content after this anchor (including itself)
     extracted = [str(anchor_elem)]
@@ -284,7 +353,7 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
             current_level = level
             break
     if current_idx is None:
-        raise ValueError(f"{anchor_href} not found in TOC.")
+        raise EpubProcessingError(f"Chapter {anchor_href} not found in TOC", "unknown", "toc_lookup")
     next_chapter_href = None
     for i in range(current_idx + 1, len(toc_entries)):
         title, toc_href, level = toc_entries[i]
@@ -293,7 +362,7 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
             break
     item = book.get_item_with_href(href)
     if item is None:
-        raise ValueError(f"File not found: {href}")
+        raise EpubProcessingError(f"Chapter file not found: {href}", "unknown", "chapter_file_lookup")
     soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
     elems = []
     def heading_level(tag_name):
@@ -303,7 +372,7 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
     if anchor:
         start_elem = soup.find(id=anchor)
         if not start_elem:
-            raise ValueError(f"Anchor {anchor} not found in {href}")
+            raise EpubProcessingError(f"Anchor {anchor} not found in {href}", "unknown", "anchor_lookup")
         start_level = heading_level(start_elem.name)
         for elem in start_elem.next_elements:
             if elem is start_elem:

@@ -1,12 +1,22 @@
 from typing import List, Tuple, Dict, Union
 import os
-import logging
 from io import StringIO
 import fitz  # PyMuPDF
 import re
+from .logger_config import get_logger, log_operation
 
-# Initialize logger
-logger = logging.getLogger(__name__)
+# Custom exception class for PDF processing errors
+class PdfProcessingError(Exception):
+    """Custom exception for PDF processing errors with detailed context"""
+    def __init__(self, message: str, file_path: str, operation: str, original_error: Exception = None):
+        self.message = message
+        self.file_path = file_path
+        self.operation = operation
+        self.original_error = original_error
+        super().__init__(f"{message} (file: {file_path}, operation: {operation})")
+
+# Initialize structured logger
+logger = get_logger(__name__)
 
 def get_all_pdf_files(path: str) -> List[str]:
     """
@@ -14,6 +24,7 @@ def get_all_pdf_files(path: str) -> List[str]:
     """
     return [f for f in os.listdir(path) if f.endswith('.pdf')]
 
+@log_operation("pdf_metadata_extraction")
 def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     Get metadata from a PDF file using PyMuPDF
@@ -30,11 +41,19 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     try:
         if not os.path.exists(pdf_path):
-            logger.error(f"File not found: {pdf_path}")
+            logger.error(
+                "PDF file not found",
+                file_path=pdf_path,
+                operation="metadata_extraction"
+            )
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
             
         # Read PDF file using PyMuPDF
-        logger.debug(f"Starting to read PDF file: {pdf_path}")
+        logger.debug(
+            "Starting PDF metadata extraction",
+            file_path=pdf_path,
+            operation="metadata_extraction"
+        )
         doc = fitz.open(pdf_path)
         meta = {}
 
@@ -90,15 +109,29 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         
         doc.close()
         
-        logger.debug(f"Successfully retrieved metadata with fields: {list(meta.keys())}")
+        logger.info(
+            "PDF metadata extraction completed",
+            file_path=pdf_path,
+            operation="metadata_extraction",
+            page_count=meta.get('pages', 0),
+            file_size=meta.get('file_size', 0),
+            metadata_fields=list(meta.keys())
+        )
         return meta
 
     except FileNotFoundError:
         raise FileNotFoundError(f"PDF file not found: {pdf_path}")
     except Exception as e:
-        logger.error(f"Failed to parse PDF file: {str(e)}")
-        raise Exception("Failed to parse PDF file")
+        logger.error(
+            "Failed to parse PDF file",
+            file_path=pdf_path,
+            operation="metadata_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise PdfProcessingError("Failed to parse PDF file", pdf_path, "metadata_extraction", e)
 
+@log_operation("pdf_toc_extraction")
 def get_toc(pdf_path: str) -> List[Tuple[str, int]]:
     """
     Get the Table of Contents (TOC) from a PDF file
@@ -115,11 +148,19 @@ def get_toc(pdf_path: str) -> List[Tuple[str, int]]:
     """
     try:
         if not os.path.exists(pdf_path):
-            logger.error(f"File not found: {pdf_path}")
+            logger.error(
+                "PDF file not found",
+                file_path=pdf_path,
+                operation="toc_extraction"
+            )
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
             
         # Read PDF file using PyMuPDF for better TOC support
-        logger.debug(f"Starting to read PDF file: {pdf_path}")
+        logger.debug(
+            "Starting PDF TOC extraction",
+            file_path=pdf_path,
+            operation="toc_extraction"
+        )
         doc = fitz.open(pdf_path)
         toc = []
         
@@ -130,14 +171,25 @@ def get_toc(pdf_path: str) -> List[Tuple[str, int]]:
             toc.append((title, page))
         
         doc.close()
-        logger.debug(f"Successfully retrieved TOC with {len(toc)} entries")
+        logger.info(
+            "PDF TOC extraction completed",
+            file_path=pdf_path,
+            operation="toc_extraction",
+            chapter_count=len(toc)
+        )
         return toc
 
     except FileNotFoundError:
         raise FileNotFoundError(f"PDF file not found: {pdf_path}")
     except Exception as e:
-        logger.error(f"Failed to parse PDF file: {str(e)}")
-        raise Exception("Failed to parse PDF file")
+        logger.error(
+            "Failed to parse PDF file",
+            file_path=pdf_path,
+            operation="toc_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise PdfProcessingError("Failed to parse PDF file", pdf_path, "toc_extraction", e)
 
 def extract_page_text(pdf_path: str, page_number: int) -> str:
     """
@@ -158,8 +210,15 @@ def extract_page_text(pdf_path: str, page_number: int) -> str:
         doc.close()
         return text
     except Exception as e:
-        logger.error(f"Failed to extract page text: {str(e)}")
-        raise Exception("Failed to extract page text")
+        logger.error(
+            "Failed to extract page text",
+            file_path=pdf_path,
+            page_number=page_number,
+            operation="page_text_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise PdfProcessingError("Failed to extract page text", pdf_path, "page_text_extraction", e)
 
 def extract_page_markdown(pdf_path: str, page_number: int) -> str:
     """
@@ -203,8 +262,15 @@ def extract_page_markdown(pdf_path: str, page_number: int) -> str:
         doc.close()
         return markdown_text.getvalue()
     except Exception as e:
-        logger.error(f"Failed to extract page markdown: {str(e)}")
-        raise Exception("Failed to extract page markdown")
+        logger.error(
+            "Failed to extract page markdown",
+            file_path=pdf_path,
+            page_number=page_number,
+            operation="page_markdown_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise PdfProcessingError("Failed to extract page markdown", pdf_path, "page_markdown_extraction", e)
 
 def extract_chapter_by_title(pdf_path: str, chapter_title: str) -> Tuple[str, List[int]]:
     """
@@ -232,7 +298,7 @@ def extract_chapter_by_title(pdf_path: str, chapter_title: str) -> Tuple[str, Li
                 break
         
         if chapter_start_page is None:
-            raise ValueError(f"Chapter '{chapter_title}' not found in TOC")
+            raise PdfProcessingError(f"Chapter '{chapter_title}' not found in TOC", pdf_path, "chapter_lookup")
             
         # If it's the last chapter, read until the end of the document
         if chapter_end_page is None:
@@ -248,5 +314,12 @@ def extract_chapter_by_title(pdf_path: str, chapter_title: str) -> Tuple[str, Li
         return ("\n".join(content), list(range(chapter_start_page, chapter_end_page)))
         
     except Exception as e:
-        logger.error(f"Failed to extract chapter: {str(e)}")
-        raise Exception("Failed to extract chapter")
+        logger.error(
+            "Failed to extract chapter",
+            file_path=pdf_path,
+            chapter_title=chapter_title,
+            operation="chapter_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise PdfProcessingError("Failed to extract chapter", pdf_path, "chapter_extraction", e)

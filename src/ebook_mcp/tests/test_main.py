@@ -297,4 +297,25 @@ class TestDecorators:
             return "test result"
         
         result = test_function()
-        assert result == "test result" 
+        assert result == "test result"
+    
+    def test_handle_mcp_errors_with_custom_exceptions(self):
+        """Test handle_mcp_errors decorator with custom exceptions"""
+        from ebook_mcp.main import handle_mcp_errors
+        from ebook_mcp.tools.epub_helper import EpubProcessingError
+        from ebook_mcp.tools.pdf_helper import PdfProcessingError
+        
+        @handle_mcp_errors
+        def test_epub_function():
+            raise EpubProcessingError("Test EPUB error", "/test.epub", "test_operation")
+        
+        @handle_mcp_errors
+        def test_pdf_function():
+            raise PdfProcessingError("Test PDF error", "/test.pdf", "test_operation")
+        
+        # Custom exceptions should be re-raised as-is
+        with pytest.raises(EpubProcessingError, match="Test EPUB error"):
+            test_epub_function()
+        
+        with pytest.raises(PdfProcessingError, match="Test PDF error"):
+            test_pdf_function() 

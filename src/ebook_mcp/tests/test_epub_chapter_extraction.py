@@ -25,7 +25,7 @@ if DEPENDENCIES_AVAILABLE:
     )
 
 
-class TestExtractChapterHtmlFixed:
+class TestExtractChapterHtml:
     """Test the improved version of extract_chapter_html function"""
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
@@ -237,7 +237,8 @@ class TestExtractChapterHtmlFixed:
         mock_book.toc = []
         
         # Test with non-existent chapter
-        with pytest.raises(ValueError, match="not found in TOC"):
+        from ebook_mcp.tools.epub_helper import EpubProcessingError
+        with pytest.raises(EpubProcessingError, match="not found in TOC"):
             extract_chapter_html(mock_book, "nonexistent.xhtml")
         
         # Test with non-existent anchor
@@ -250,7 +251,7 @@ class TestExtractChapterHtmlFixed:
         mock_item.get_content.return_value = "<html><body><h1>Test</h1></body></html>".encode('utf-8')
         mock_book.get_item_with_href.return_value = mock_item
         
-        with pytest.raises(ValueError, match="not found in TOC"):
+        with pytest.raises(EpubProcessingError, match="not found in"):
             extract_chapter_html(mock_book, "chapter1.xhtml#nonexistent")
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
