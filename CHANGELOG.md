@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `pyproject.toml`, removed `PyPDF2` dependency
   - Deleted `test_pdf_metadata_comparison.py` test file
   - Updated related tests, removed `PyPDF2` related tests
-  - Modified `pymupdf_metadata_demo.py`, removed `PyPDF2` comparison logic
+
   - Enhanced PDF metadata extraction functionality, providing richer metadata information
 
 ### 🌍 Added
