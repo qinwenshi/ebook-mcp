@@ -1,6 +1,6 @@
 [project]
 name = "ebook-mcp"
-version = "0.1.7"
+version = "0.1.8"
 description = "An MCP server for chatting with ebooks (PDF/EPUB)."
 authors = [{ name = "onebird", email = "rymrocks@163.com" }]
 license = "Apache-2.0"

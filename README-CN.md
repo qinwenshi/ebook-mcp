@@ -4,11 +4,9 @@
 
 <img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
 
-[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | 中文 | [📋 更新日志](CHANGELOG.md)
+[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | [한국어](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-KR.md) | [Français](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-FR.md) | [Deutsch](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-DE.md)
 
 Ebook-MCP 是一个强大的模型上下文协议（MCP）服务器，用于处理电子书。基于[模型上下文协议](https://github.com/modelcontextprotocol)构建，它提供了一套标准化的API，用于LLM应用程序与电子书处理功能之间的无缝集成。目前支持EPUB和PDF格式。
-
-作者：Yiming
 
 ## 使用场景与价值
 

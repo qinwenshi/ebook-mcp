@@ -5,11 +5,10 @@
 <img src="logo.png" alt="ebook-mcp logo" width="132" height="132">
 
 
-English | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [📋 Changelog](CHANGELOG.md)
+[English](https://github.com/onebirdrocks/ebook-mcp/blob/main/README.md) | [中文](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-CN.md) | [日本語](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-JP.md) | [한국어](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-KR.md) | [Français](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-FR.md) | [Deutsch](https://github.com/onebirdrocks/ebook-mcp/blob/main/README-DE.md) 
 
 Ebook-MCP is a powerful Model Context Protocol (MCP) server for processing electronic books. Built on the [Model Context Protocol](https://github.com/modelcontextprotocol), it provides a set of standardized APIs for seamless integration between LLM applications and e-book processing capabilities. Currently supports EPUB and PDF formats.
 
-Author: Yiming
 
 ## Use Cases & Value
 
@@ -163,7 +162,7 @@ Run the server in development mode:
 uv run mcp dev src/ebook_mcp/main.py
 ```
 
-You can visit http://localhost:5173/ for testing & debugging purpose 
+You can visit http://localhost:5173/ for testing & debugging purposes 
 You can also install the inspector for the test.
 ```
 npx @modelcontextprotocol/inspector uv --directory . run src/ebook_mcp/main.py
@@ -177,7 +176,7 @@ uv run src/ebook_mcp/main.py
 ```
 
 
-#### Config the MCP in Cursor
+#### Configure the MCP in Cursor
 
 Add the following configuration in Cursor
 ```bash
