@@ -1,6 +1,25 @@
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Any, Optional
 import os
-import logging
+from .logger_config import get_logger, log_operation
+
+# Custom exception classes for better error handling
+class EpubProcessingError(Exception):
+    """Custom exception for EPUB processing errors with detailed context"""
+    def __init__(self, message: str, file_path: str, operation: str, original_error: Exception = None):
+        self.message = message
+        self.file_path = file_path
+        self.operation = operation
+        self.original_error = original_error
+        super().__init__(f"{message} (file: {file_path}, operation: {operation})")
+
+class PdfProcessingError(Exception):
+    """Custom exception for PDF processing errors with detailed context"""
+    def __init__(self, message: str, file_path: str, operation: str, original_error: Exception = None):
+        self.message = message
+        self.file_path = file_path
+        self.operation = operation
+        self.original_error = original_error
+        super().__init__(f"{message} (file: {file_path}, operation: {operation})")
 
 # Try to import optional dependencies
 try:
@@ -25,8 +44,8 @@ except ImportError:
     html2text = None
     HTML2TEXT_AVAILABLE = False
 
-# Initialize logger
-logger = logging.getLogger(__name__)
+# Initialize structured logger
+logger = get_logger(__name__)
 
 
 def get_all_epub_files(path: str) -> List[str]:
@@ -35,6 +54,7 @@ def get_all_epub_files(path: str) -> List[str]:
     """
     return [f for f in os.listdir(path) if f.endswith('.epub')]
 
+@log_operation("epub_toc_extraction")
 def get_toc(epub_path: str) -> List[Tuple[str, str]]:
     """
     Get the Table of Contents (TOC) from an EPUB file
@@ -51,11 +71,19 @@ def get_toc(epub_path: str) -> List[Tuple[str, str]]:
     """
     try:
         if not os.path.exists(epub_path):
-            logger.error(f"File not found: {epub_path}")
+            logger.error(
+                "EPUB file not found",
+                file_path=epub_path,
+                operation="toc_extraction"
+            )
             raise FileNotFoundError(f"EPUB file not found: {epub_path}")
             
         # Read EPUB file
-        logger.debug(f"Starting to read EPUB file: {epub_path}")
+        logger.debug(
+            "Starting EPUB TOC extraction",
+            file_path=epub_path,
+            operation="toc_extraction"
+        )
         book = epub.read_epub(epub_path)
         toc = []
         
@@ -76,14 +104,26 @@ def get_toc(epub_path: str) -> List[Tuple[str, str]]:
                 # Single level TOC item
                 toc.append((item.title, item.href))
         
-        logger.debug(f"Successfully retrieved TOC with {len(toc)} entries")
+        logger.info(
+            "EPUB TOC extraction completed",
+            file_path=epub_path,
+            operation="toc_extraction",
+            chapter_count=len(toc)
+        )
         return toc
     except FileNotFoundError:
         raise FileNotFoundError(f"EPUB file not found: {epub_path}")
     except Exception as e:
-        logger.error(f"Failed to parse EPUB file: {str(e)}")
-        raise Exception("Failed to parse EPUB file")
+        logger.error(
+            "Failed to parse EPUB file",
+            file_path=epub_path,
+            operation="toc_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise EpubProcessingError("Failed to parse EPUB file", epub_path, "toc_extraction", e)
 
+@log_operation("epub_metadata_extraction")
 def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     Get metadata from an EPUB file
@@ -100,11 +140,19 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
     """
     try:
         if not os.path.exists(epub_path):
-            logger.error(f"File not found: {epub_path}")
+            logger.error(
+                "EPUB file not found",
+                file_path=epub_path,
+                operation="metadata_extraction"
+            )
             raise FileNotFoundError(f"EPUB file not found: {epub_path}")
             
         # Read EPUB file
-        logger.debug(f"Starting to read EPUB file: {epub_path}")
+        logger.debug(
+            "Starting EPUB metadata extraction",
+            file_path=epub_path,
+            operation="metadata_extraction"
+        )
         book = epub.read_epub(epub_path)
         meta = {}
 
@@ -124,7 +172,7 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
         # Extract standard fields
         for field, dc_field in standard_fields.items():
             items = book.get_metadata('DC', dc_field)
-            if items:
+            if items and len(items) > 0 and len(items[0]) > 0:
                 meta[field] = items[0][0]
 
         # Handle multi-value fields
@@ -133,18 +181,30 @@ def get_meta(epub_path: str) -> Dict[str, Union[str, List[str]]]:
             if items:
                 meta[field] = [item[0] for item in items]
 
-        logger.debug(f"Successfully retrieved metadata with fields: {list(meta.keys())}")
+        logger.info(
+            "EPUB metadata extraction completed",
+            file_path=epub_path,
+            operation="metadata_extraction",
+            metadata_fields=list(meta.keys())
+        )
         return meta
 
     except FileNotFoundError:
         raise FileNotFoundError(f"EPUB file not found: {epub_path}")
     except Exception as e:
-        logger.error(f"Failed to parse EPUB file: {str(e)}")
-        raise Exception("Failed to parse EPUB file")
+        logger.error(
+            "Failed to parse EPUB file",
+            file_path=epub_path,
+            operation="metadata_extraction",
+            error_type=type(e).__name__,
+            error_details=str(e)
+        )
+        raise EpubProcessingError("Failed to parse EPUB file", epub_path, "metadata_extraction", e)
     
 
 
-def extract_chapter_from_epub(epub_path, anchor_href):
+@log_operation("epub_chapter_extraction")
+def extract_chapter_from_epub(epub_path: str, anchor_href: str) -> str:
     """
     Extract complete HTML content of a chapter starting from the specified anchor point until the next TOC entry.
     
@@ -155,7 +215,12 @@ def extract_chapter_from_epub(epub_path, anchor_href):
     Returns:
         HTML string (complete chapter content starting from the anchor point)
     """
-    logger.debug(f"Extracting chapter from EPUB: path= {epub_path} anchor_href= {anchor_href}")
+    logger.debug(
+        "Starting EPUB chapter extraction",
+        file_path=epub_path,
+        anchor_href=anchor_href,
+        operation="chapter_extraction"
+    )
     # Read EPUB file
     book = epub.read_epub(epub_path)
     # Parse input href and anchor id
@@ -165,12 +230,16 @@ def extract_chapter_from_epub(epub_path, anchor_href):
         href, anchor_id = anchor_href, None
     
     if anchor_id:
-        logger.debug(f"Anchor: {anchor_id}")
+        logger.debug(
+            "Processing anchor",
+            anchor_id=anchor_id,
+            operation="chapter_extraction"
+        )
 
     # Get current chapter XHTML content
     item = book.get_item_with_href(href)
     if item is None:
-        raise ValueError(f"File not found: {href}")
+        raise EpubProcessingError(f"Chapter file not found: {href}", epub_path, "chapter_extraction")
     
     soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
 
@@ -181,7 +250,7 @@ def extract_chapter_from_epub(epub_path, anchor_href):
     # Find anchor starting position
     anchor_elem = soup.find(id=anchor_id)
     if not anchor_elem:
-        raise ValueError(f"Anchor #{anchor_id} not found in file {href}")
+        raise EpubProcessingError(f"Anchor #{anchor_id} not found in file {href}", epub_path, "anchor_extraction")
 
     # Extract all content after this anchor (including itself)
     extracted = [str(anchor_elem)]
@@ -191,12 +260,12 @@ def extract_chapter_from_epub(epub_path, anchor_href):
     return '\n'.join(extracted)
 
 
-def read_epub(epub_path):
+def read_epub(epub_path: str) -> Any:
     return epub.read_epub(epub_path)
 
-def flatten_toc(book):
+def flatten_toc(book: Any) -> List[str]:
     toc_list = []
-    def _flatten(toc):
+    def _flatten(toc: Any) -> None:
         for item in toc:
             if isinstance(item, tuple):
                 link, children = item
@@ -209,67 +278,20 @@ def flatten_toc(book):
     _flatten(book.toc)
     return toc_list
 
-def extract_chapter_html(book, anchor_href):
-    toc = flatten_toc(book)
-    if anchor_href not in toc:
-        raise ValueError(f"{anchor_href} not found in TOC.")
-
-    idx = toc.index(anchor_href)
-    href, anchor = anchor_href.split('#') if '#' in anchor_href else (anchor_href, None)
-    next_href = toc[idx + 1] if idx + 1 < len(toc) else None
-
-    item = book.get_item_with_href(href)
-    soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
-
-    if anchor:
-        start_elem = soup.find(id=anchor)
-        if not start_elem:
-            raise ValueError(f"Anchor {anchor} not found in {href}")
-        elems = [str(start_elem)] + [str(e) for e in start_elem.find_all_next()]
-    else:
-        elems = [str(soup)]
-
-    # If next anchor is in current file, truncate
-    if next_href and next_href.startswith(href) and '#' in next_href:
-        next_anchor = next_href.split('#')[1]
-        stop_elem = soup.find(id=next_anchor)
-        if stop_elem:
-            stop_html = str(stop_elem)
-            full_html = '\n'.join(elems)
-            return full_html.split(stop_html)[0]  # Truncate the front part
-    html = '\n'.join(elems)
-    return clean_html(html)  # Clean the HTML before returning
-
-def extract_chapter_plain_text(book, anchor_href):
+def extract_chapter_plain_text(book: Any, anchor_href: str) -> str:
     html = extract_chapter_html(book, anchor_href)
     soup = BeautifulSoup(html, 'html.parser')
     return soup.get_text()
 
-def extract_chapter_markdown(book, anchor_href):
-    html = extract_chapter_html(book, anchor_href)
-    return convert_html_to_markdown(html)
 
-def extract_multiple_chapters(book, anchor_list, output='html'):
-    results = []
-    for href in anchor_list:
-        if output == 'html':
-            content = extract_chapter_html(book, href)
-        elif output == 'text':
-            content = extract_chapter_plain_text(book, href)
-        elif output == 'markdown':
-            content = convert_html_to_markdown(extract_chapter_html(book, href))
-        else:
-            raise ValueError("Invalid output format.")
-        results.append((href, content))
-    return results
 
-def convert_html_to_markdown(html_str):
+def convert_html_to_markdown(html_str: str) -> str:
     h = html2text.HTML2Text()
     h.ignore_links = False
     h.ignore_images = False
     return h.handle(html_str)
 
-def clean_html(html_str):
+def clean_html(html_str: str) -> str:
     """
     Clean HTML content:
     - Remove unnecessary tags like <img>, <script>, <style>, <svg>, <video>, <iframe>, <nav>
@@ -298,7 +320,7 @@ def clean_html(html_str):
 
 
 
-def extract_chapter_html_fixed(book, anchor_href):
+def extract_chapter_html(book: Any, anchor_href: str) -> str:
     """
     Extract chapter HTML content with improved logic to handle subchapters correctly.
     This function fixes the issue where subchapters in the TOC cause premature truncation
@@ -309,7 +331,7 @@ def extract_chapter_html_fixed(book, anchor_href):
     Returns:
         HTML string (complete chapter content with proper boundaries)
     """
-    logger.debug(f"Extracting chapter with fixed logic: {anchor_href}")
+    logger.debug(f"Extracting chapter with improved logic: {anchor_href}")
     href, anchor = anchor_href.split('#') if '#' in anchor_href else (anchor_href, None)
     toc_entries = []
     for item in book.toc:
@@ -331,7 +353,7 @@ def extract_chapter_html_fixed(book, anchor_href):
             current_level = level
             break
     if current_idx is None:
-        raise ValueError(f"{anchor_href} not found in TOC.")
+        raise EpubProcessingError(f"Chapter {anchor_href} not found in TOC", "unknown", "toc_lookup")
     next_chapter_href = None
     for i in range(current_idx + 1, len(toc_entries)):
         title, toc_href, level = toc_entries[i]
@@ -340,7 +362,7 @@ def extract_chapter_html_fixed(book, anchor_href):
             break
     item = book.get_item_with_href(href)
     if item is None:
-        raise ValueError(f"File not found: {href}")
+        raise EpubProcessingError(f"Chapter file not found: {href}", "unknown", "chapter_file_lookup")
     soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
     elems = []
     def heading_level(tag_name):
@@ -350,7 +372,7 @@ def extract_chapter_html_fixed(book, anchor_href):
     if anchor:
         start_elem = soup.find(id=anchor)
         if not start_elem:
-            raise ValueError(f"Anchor {anchor} not found in {href}")
+            raise EpubProcessingError(f"Anchor {anchor} not found in {href}", "unknown", "anchor_lookup")
         start_level = heading_level(start_elem.name)
         for elem in start_elem.next_elements:
             if elem is start_elem:
@@ -379,33 +401,29 @@ def extract_chapter_html_fixed(book, anchor_href):
     return clean_html(html)
 
 
-def extract_chapter_plain_text_fixed(book, anchor_href):
-    """Fixed version of extract_chapter_plain_text using extract_chapter_html_fixed"""
-    html = extract_chapter_html_fixed(book, anchor_href)
-    soup = BeautifulSoup(html, 'html.parser')
-    return soup.get_text()
-
-
-def extract_chapter_markdown_fixed(book, anchor_href):
-    """Fixed version of extract_chapter_markdown using extract_chapter_html_fixed"""
-    html = extract_chapter_html_fixed(book, anchor_href)
+def extract_chapter_markdown(book: Any, anchor_href: str) -> str:
+    """Fixed version of extract_chapter_markdown using extract_chapter_html"""
+    html = extract_chapter_html(book, anchor_href)
     return convert_html_to_markdown(html)
 
 
-def extract_multiple_chapters_fixed(book, anchor_list, output='html'):
-    """Fixed version of extract_multiple_chapters using extract_chapter_html_fixed"""
+def extract_multiple_chapters(book: Any, anchor_list: List[str], output: str = 'html') -> List[Tuple[str, str]]:
+    """Extract multiple chapters using improved extract_chapter_html logic"""
     results = []
     for href in anchor_list:
         if output == 'html':
-            content = extract_chapter_html_fixed(book, href)
+            content = extract_chapter_html(book, href)
         elif output == 'text':
-            content = extract_chapter_plain_text_fixed(book, href)
+            content = extract_chapter_plain_text(book, href)
         elif output == 'markdown':
-            content = extract_chapter_markdown_fixed(book, href)
+            content = extract_chapter_markdown(book, href)
         else:
             raise ValueError("Invalid output format.")
         results.append((href, content))
     return results
+
+
+
 
 
 if __name__ == "__main__":
@@ -413,11 +431,3 @@ if __name__ == "__main__":
     book = read_epub('/path/to/book.epub')
     # Single chapter to Markdown
     md = convert_html_to_markdown(extract_chapter_html(book, 'xhtml/ch02.xhtml#ch02'))
-    # Multiple chapters to plain text
-    chapters = ['xhtml/ch01.xhtml#ch01', 'xhtml/ch02.xhtml#ch02', 'xhtml/ch03.xhtml#ch03']
-    results = extract_multiple_chapters(book, chapters, output='text')
-    # Save results
-    for href, content in results:
-        fname = href.replace('/', '_').replace('#', '_') + '.txt'
-        with open(fname, 'w', encoding='utf-8') as f:
-            f.write(content)

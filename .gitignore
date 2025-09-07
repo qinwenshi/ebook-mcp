@@ -5,10 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
-
+**/.next/
 .DS_Store
 
 *.log
+logs/
 *__pycache__
 uv.lock
 

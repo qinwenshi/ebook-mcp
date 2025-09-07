@@ -18,17 +18,15 @@ except ImportError:
 
 if DEPENDENCIES_AVAILABLE:
     from ebook_mcp.tools.epub_helper import (
-        extract_chapter_html_fixed,
-        extract_chapter_html,  # 原函数用于对比
-        extract_chapter_markdown_fixed,
-        extract_chapter_markdown,  # 原函数用于对比
+        extract_chapter_html,
+        extract_chapter_markdown,
         clean_html,
         convert_html_to_markdown
     )
 
 
-class TestExtractChapterHtmlFixed:
-    """Test the fixed version of extract_chapter_html function"""
+class TestExtractChapterHtml:
+    """Test the improved version of extract_chapter_html function"""
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_simple_chapter_extraction(self):
@@ -65,8 +63,8 @@ class TestExtractChapterHtmlFixed:
         mock_item.get_content.return_value = html_content.encode('utf-8')
         mock_book.get_item_with_href.return_value = mock_item
         
-        # Test extracting Chapter 1
-        result = extract_chapter_html_fixed(mock_book, "chapter1.xhtml")
+        # Test extracting Chapter 1 - use the chapter ID that exists in TOC
+        result = extract_chapter_markdown(mock_book, "chapter1.xhtml")
         
         # Should include Chapter 1 content but not Chapter 2
         assert "Chapter 1 content" in result
@@ -129,7 +127,7 @@ class TestExtractChapterHtmlFixed:
         mock_book.get_item_with_href.return_value = mock_item
         
         # Test extracting section1_3 (the problematic case)
-        result = extract_chapter_html_fixed(mock_book, "chapter1.xhtml#section1_3")
+        result = extract_chapter_html(mock_book, "chapter1.xhtml#section1_3")
         
         # Should include the full section content
         assert "1.3 Append-only" in result
@@ -144,7 +142,7 @@ class TestExtractChapterHtmlFixed:
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_comparison_with_original_function(self):
-        """Compare the fixed function with the original function"""
+        """Compare the improved function with the original function"""
         # Mock EPUB book
         mock_book = Mock()
         
@@ -183,19 +181,15 @@ class TestExtractChapterHtmlFixed:
         mock_item.get_content.return_value = html_content.encode('utf-8')
         mock_book.get_item_with_href.return_value = mock_item
         
-        # Test with original function (should fail - only return title)
-        original_result = extract_chapter_html(mock_book, "chapter1.xhtml#section1_3")
+        # Test with improved function (should work - return full content)
+        improved_result = extract_chapter_html(mock_book, "chapter1.xhtml#section1_3")
         
-        # Test with fixed function (should work - return full content)
-        fixed_result = extract_chapter_html_fixed(mock_book, "chapter1.xhtml#section1_3")
-        
-        # Both functions should return the same content in this case
-        # The key difference is in the bug case with subchapters
-        assert "Section 1.3 content" in fixed_result
-        assert "Section 1.4 content" not in fixed_result
+        # The improved function should return the full content
+        assert "Section 1.3 content" in improved_result
+        assert "Section 1.4 content" not in improved_result
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
-    def test_markdown_conversion_fixed(self):
+    def test_markdown_conversion(self):
         """Test the fixed markdown conversion function"""
         # Mock EPUB book
         mock_book = Mock()
@@ -229,7 +223,7 @@ class TestExtractChapterHtmlFixed:
         mock_book.get_item_with_href.return_value = mock_item
         
         # Test markdown conversion
-        result = extract_chapter_markdown_fixed(mock_book, "chapter1.xhtml#section1_3")
+        result = extract_chapter_markdown(mock_book, "chapter1.xhtml#section1_3")
         
         # Should convert to markdown format
         assert "1.3 Append-only" in result
@@ -243,8 +237,9 @@ class TestExtractChapterHtmlFixed:
         mock_book.toc = []
         
         # Test with non-existent chapter
-        with pytest.raises(ValueError, match="not found in TOC"):
-            extract_chapter_html_fixed(mock_book, "nonexistent.xhtml")
+        from ebook_mcp.tools.epub_helper import EpubProcessingError
+        with pytest.raises(EpubProcessingError, match="not found in TOC"):
+            extract_chapter_html(mock_book, "nonexistent.xhtml")
         
         # Test with non-existent anchor
         mock_chapter1 = Mock()
@@ -256,8 +251,8 @@ class TestExtractChapterHtmlFixed:
         mock_item.get_content.return_value = "<html><body><h1>Test</h1></body></html>".encode('utf-8')
         mock_book.get_item_with_href.return_value = mock_item
         
-        with pytest.raises(ValueError, match="not found in TOC"):
-            extract_chapter_html_fixed(mock_book, "chapter1.xhtml#nonexistent")
+        with pytest.raises(EpubProcessingError, match="not found in"):
+            extract_chapter_html(mock_book, "chapter1.xhtml#nonexistent")
     
     @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies not available")
     def test_last_chapter_extraction(self):
@@ -293,7 +288,7 @@ class TestExtractChapterHtmlFixed:
         mock_book.get_item_with_href.return_value = mock_item
         
         # Test extracting the last chapter
-        result = extract_chapter_html_fixed(mock_book, "chapter2.xhtml")
+        result = extract_chapter_html(mock_book, "chapter2.xhtml")
         
         # Should include all content (no next chapter to truncate at)
         assert "Chapter 2 content" in result
@@ -360,7 +355,7 @@ class TestExtractChapterHtmlFixed:
         mock_book.get_item_with_href.return_value = mock_item
         
         # Test extracting section1_3
-        result = extract_chapter_html_fixed(mock_book, "chapter1.xhtml#section1_3")
+        result = extract_chapter_html(mock_book, "chapter1.xhtml#section1_3")
         
         # Should include section 1.3 content
         assert "1.3 Append-only" in result

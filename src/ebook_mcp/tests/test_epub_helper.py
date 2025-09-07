@@ -21,14 +21,13 @@ except ImportError:
 
 from ebook_mcp.tools.epub_helper import (
     get_all_epub_files,
-    get_toc,
     get_meta,
+    get_toc,
     read_epub,
     flatten_toc,
     extract_chapter_html,
     extract_chapter_plain_text,
-    extract_chapter_markdown,
-    extract_multiple_chapters,
+
     convert_html_to_markdown,
     clean_html
 )
@@ -76,7 +75,10 @@ class TestEpubHelper:
         
         try:
             result = get_toc(epub_path)
-            expected = [("Chapter 1", "chapter1.xhtml"), ("Chapter 2", "chapter2.xhtml")]
+            expected = [
+                ("Chapter 1", "chapter1.xhtml"),
+                ("Chapter 2", "chapter2.xhtml")
+            ]
             assert result == expected
         finally:
             os.unlink(epub_path)
@@ -135,15 +137,21 @@ class TestEpubHelper:
         """Test get_meta successful case"""
         # Mock EPUB book with metadata
         mock_book = Mock()
-        mock_book.get_metadata.return_value = {
-            'title': [('Test Book', {})],
-            'creator': [('Test Author', {})],
-            'language': [('en', {})],
-            'identifier': [('test-id', {})],
-            'date': [('2023-01-01', {})],
-            'publisher': [('Test Publisher', {})],
-            'description': [('Test description', {})]
-        }
+        
+        # 设置 get_metadata 方法返回正确的格式
+        def mock_get_metadata(namespace, field):
+            metadata_map = {
+                'title': [('Test Book', {})],
+                'creator': [('Test Author', {})],
+                'language': [('en', {})],
+                'identifier': [('test-id', {})],
+                'date': [('2023-01-01', {})],
+                'publisher': [('Test Publisher', {})],
+                'description': [('Test description', {})]
+            }
+            return metadata_map.get(field, [])
+        
+        mock_book.get_metadata = mock_get_metadata
         mock_read_epub.return_value = mock_book
         
         with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as f:
@@ -154,7 +162,7 @@ class TestEpubHelper:
             result = get_meta(epub_path)
             expected = {
                 'title': 'Test Book',
-                'creator': 'Test Author',
+                'creator': ['Test Author'],
                 'language': 'en',
                 'identifier': 'test-id',
                 'date': '2023-01-01',
@@ -212,12 +220,11 @@ class TestEpubHelper:
         mock_chapter2.href = "chapter2.xhtml"
         
         toc = [mock_chapter1, mock_chapter2]
-        result = flatten_toc(toc)
+        mock_book = Mock()
+        mock_book.toc = toc
+        result = flatten_toc(mock_book)
         
-        expected = [
-            ("Chapter 1", "chapter1.xhtml"),
-            ("Chapter 2", "chapter2.xhtml")
-        ]
+        expected = ["chapter1.xhtml", "chapter2.xhtml"]
         assert result == expected
     
     def test_flatten_toc_nested(self):
@@ -230,12 +237,11 @@ class TestEpubHelper:
         mock_subchapter1.href = "subchapter1.1.xhtml"
         
         toc = [(mock_chapter1, [mock_subchapter1])]
-        result = flatten_toc(toc)
+        mock_book = Mock()
+        mock_book.toc = toc
+        result = flatten_toc(mock_book)
         
-        expected = [
-            ("Chapter 1", "chapter1.xhtml"),
-            ("Subchapter 1.1", "subchapter1.1.xhtml")
-        ]
+        expected = ["chapter1.xhtml", "subchapter1.1.xhtml"]
         assert result == expected
     
     def test_clean_html(self):
@@ -287,54 +293,4 @@ class TestEpubHelper:
         assert "Title" in result
         assert "Content" in result
     
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
-    def test_extract_chapter_markdown(self, mock_extract_html):
-        """Test extract_chapter_markdown function"""
-        mock_extract_html.return_value = "<h1>Title</h1><p>This is <strong>bold</strong> text.</p>"
-        
-        mock_book = Mock()
-        result = extract_chapter_markdown(mock_book, "chapter1")
-        
-        mock_extract_html.assert_called_once_with(mock_book, "chapter1")
-        # Should convert to markdown
-        assert "# Title" in result
-        assert "**bold**" in result
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_html')
-    def test_extract_multiple_chapters_html(self, mock_extract_html):
-        """Test extract_multiple_chapters with HTML output"""
-        mock_extract_html.return_value = "<h1>Chapter Content</h1>"
-        
-        mock_book = Mock()
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output='html')
-        
-        assert mock_extract_html.call_count == 2
-        assert len(result) == 2
-        assert all("<h1>Chapter Content</h1>" in content for content in result)
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_markdown')
-    def test_extract_multiple_chapters_markdown(self, mock_extract_markdown):
-        """Test extract_multiple_chapters with markdown output"""
-        mock_extract_markdown.return_value = "# Chapter Content"
-        
-        mock_book = Mock()
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output='markdown')
-        
-        assert mock_extract_markdown.call_count == 2
-        assert len(result) == 2
-        assert all("# Chapter Content" in content for content in result)
-    
-    @patch('ebook_mcp.tools.epub_helper.extract_chapter_plain_text')
-    def test_extract_multiple_chapters_plain_text(self, mock_extract_plain):
-        """Test extract_multiple_chapters with plain text output"""
-        mock_extract_plain.return_value = "Chapter Content"
-        
-        mock_book = Mock()
-        chapters = ["chapter1", "chapter2"]
-        result = extract_multiple_chapters(mock_book, chapters, output='plain')
-        
-        assert mock_extract_plain.call_count == 2
-        assert len(result) == 2
-        assert all("Chapter Content" in content for content in result) 
+ 

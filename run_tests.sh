@@ -25,7 +25,7 @@ BASIC_RESULT=$?
 
 echo ""
 echo "🧪 运行 EPUB 章节提取修复版本测试..."
-python -m pytest $TEST_DIR/test_epub_chapter_extraction_fixed.py -v
+python -m pytest $TEST_DIR/test_epub_chapter_extraction.py -v
 FIXED_RESULT=$?
 
 echo ""
