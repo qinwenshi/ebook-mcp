@@ -347,12 +347,52 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
             toc_entries.append((item.title, item.href, 1))
     current_idx = None
     current_level = None
+    fallback_idx = None
+    fallback_level = None
+    
+    # Try multiple matching strategies with preference for more specific matches
     for i, (title, toc_href, level) in enumerate(toc_entries):
-        if toc_href == anchor_href or (anchor_href in toc_href and '#' in anchor_href):
+        # Strategy 1: Exact match (highest priority)
+        if toc_href == anchor_href:
             current_idx = i
             current_level = level
             break
+        
+        # Strategy 2: TOC href is contained in the requested anchor_href (high priority)
+        if toc_href in anchor_href:
+            current_idx = i
+            current_level = level
+            # Don't break here - continue looking for exact matches
+        
+        # Strategy 3: File part matches (lower priority - use as fallback)
+        if current_idx is None:  # Only consider if no better match found
+            if '#' in anchor_href and '#' in toc_href:
+                anchor_file = anchor_href.split('#')[0]
+                toc_file = toc_href.split('#')[0]
+                if anchor_file == toc_file and fallback_idx is None:
+                    fallback_idx = i
+                    fallback_level = level
+            elif '#' in anchor_href:
+                anchor_file = anchor_href.split('#')[0]
+                if anchor_file == toc_href and fallback_idx is None:
+                    fallback_idx = i
+                    fallback_level = level
+            elif '#' in toc_href:
+                toc_file = toc_href.split('#')[0]
+                if toc_file == anchor_href and fallback_idx is None:
+                    fallback_idx = i
+                    fallback_level = level
+    
+    # Use fallback if no better match was found
+    if current_idx is None and fallback_idx is not None:
+        current_idx = fallback_idx
+        current_level = fallback_level
+    
     if current_idx is None:
+        # Log available TOC entries for debugging
+        logger.debug(f"Available TOC entries:")
+        for i, (title, toc_href, level) in enumerate(toc_entries):
+            logger.debug(f"  [{i}] '{title}' -> '{toc_href}' (level {level})")
         raise EpubProcessingError(f"Chapter {anchor_href} not found in TOC", "unknown", "toc_lookup")
     next_chapter_href = None
     for i in range(current_idx + 1, len(toc_entries)):
@@ -372,16 +412,28 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
     if anchor:
         start_elem = soup.find(id=anchor)
         if not start_elem:
-            raise EpubProcessingError(f"Anchor {anchor} not found in {href}", "unknown", "anchor_lookup")
-        start_level = heading_level(start_elem.name)
-        for elem in start_elem.next_elements:
-            if elem is start_elem:
+            # Try alternative anchor lookup methods
+            start_elem = soup.find(attrs={"name": anchor})
+            if not start_elem:
+                # Try to find anchor in href attributes
+                start_elem = soup.find('a', href=f"#{anchor}")
+                if not start_elem:
+                    # Log the issue and fall back to returning the entire chapter
+                    logger.warning(f"Anchor '{anchor}' not found in {href}, returning entire chapter content")
+                    # Fall back to returning entire chapter content
+                    elems = [str(elem) for elem in soup.body.children if hasattr(elem, 'name')] if soup.body else [str(soup)]
+                    return ''.join(elems)
+        
+        if start_elem:
+            start_level = heading_level(start_elem.name) if start_elem.name else 7
+            for elem in start_elem.next_elements:
+                if elem is start_elem:
+                    elems.append(str(elem))
+                    continue
+                if hasattr(elem, 'name') and elem.name and elem.name.startswith('h') and elem.name[1:].isdigit():
+                    if heading_level(elem.name) <= start_level:
+                        break
                 elems.append(str(elem))
-                continue
-            if hasattr(elem, 'name') and elem.name and elem.name.startswith('h') and elem.name[1:].isdigit():
-                if heading_level(elem.name) <= start_level:
-                    break
-            elems.append(str(elem))
     else:
         chapter_elem = soup.find(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
         if chapter_elem:
