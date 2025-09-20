@@ -389,11 +389,58 @@ def extract_chapter_html(book: Any, anchor_href: str) -> str:
         current_level = fallback_level
     
     if current_idx is None:
-        # Log available TOC entries for debugging
+        # Chapter not found in TOC, but it might exist in the EPUB file
+        # Try to find the file directly in the EPUB
+        logger.debug(f"Chapter {anchor_href} not found in TOC, checking if file exists in EPUB")
+        
+        # Check if the file exists in the EPUB
+        item = book.get_item_with_href(href)
+        if item is not None:
+            logger.info(f"Chapter file {href} found in EPUB but not in TOC, processing as standalone chapter")
+            # Process as a standalone chapter without TOC-based boundaries
+            soup = BeautifulSoup(item.get_content().decode('utf-8'), 'html.parser')
+            
+            # If there's an anchor, try to find it and extract from that point
+            if anchor:
+                # Try multiple anchor finding strategies
+                anchor_elem = soup.find(id=anchor)
+                if not anchor_elem:
+                    anchor_elem = soup.find(attrs={'name': anchor})
+                if not anchor_elem:
+                    anchor_elem = soup.find('a', href=f'#{anchor}')
+                
+                if anchor_elem:
+                    logger.debug(f"Found anchor {anchor} in standalone chapter")
+                    # Extract content from anchor point to end of file
+                    elems = []
+                    current = anchor_elem
+                    while current:
+                        if hasattr(current, 'name') and current.name:
+                            elems.append(current)
+                        current = current.next_sibling
+                    
+                    # Also include all following elements
+                    for elem in anchor_elem.find_all_next():
+                        if elem not in elems:
+                            elems.append(elem)
+                    
+                    if elems:
+                        return ''.join(str(elem) for elem in elems)
+                    else:
+                        logger.warning(f"Anchor {anchor} found but no content extracted, returning full chapter")
+                        return str(soup)
+                else:
+                    logger.warning(f"Anchor {anchor} not found in standalone chapter, returning full chapter")
+                    return str(soup)
+            else:
+                # No anchor, return entire chapter
+                return str(soup)
+        
+        # File doesn't exist at all
         logger.debug(f"Available TOC entries:")
         for i, (title, toc_href, level) in enumerate(toc_entries):
             logger.debug(f"  [{i}] '{title}' -> '{toc_href}' (level {level})")
-        raise EpubProcessingError(f"Chapter {anchor_href} not found in TOC", "unknown", "toc_lookup")
+        raise EpubProcessingError(f"Chapter {anchor_href} not found in TOC or EPUB file", "unknown", "toc_lookup")
     next_chapter_href = None
     for i in range(current_idx + 1, len(toc_entries)):
         title, toc_href, level = toc_entries[i]
