@@ -49,9 +49,9 @@ def handle_pdf_errors(func: Callable[..., T]) -> Callable[..., T]:
     return wrapper
 
 
-log_dir = "logs"
+log_dir = os.path.expanduser("~/Library/Logs/ebook-mcp")
 if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+    os.makedirs(log_dir, exist_ok=True)
 
 log_file = os.path.join(log_dir, f"ebook-mcp_server_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 logging.basicConfig(

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ebook-mcp": {
+      "command": "python",
+      "args": ["/Users/xudongqi/projects/ebook-mcp/src/ebook_mcp/main.py"],
+      "env": {
+        "PYTHONPATH": "/Users/xudongqi/projects/ebook-mcp"
+      }
+    }
+  },
+  "globalShortcuts": [],
+  "updater": {
+    "checkForUpdates": true
+  }
+}

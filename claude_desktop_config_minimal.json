@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ebook-mcp": {
+      "command": "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3",
+      "args": [
+        "/Users/xudongqi/projects/ebook-mcp/src/ebook_mcp/main.py"
+      ]
+    }
+  }
+}
