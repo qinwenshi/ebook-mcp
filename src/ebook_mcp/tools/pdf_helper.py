@@ -25,7 +25,7 @@ def get_all_pdf_files(path: str) -> List[str]:
     return [f for f in os.listdir(path) if f.endswith('.pdf')]
 
 @log_operation("pdf_metadata_extraction")
-def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
+def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str], int, float, bool]]:
     """
     Get metadata from a PDF file using PyMuPDF
     
@@ -33,7 +33,7 @@ def get_meta(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
         pdf_path (str): Absolute path to the PDF file
         
     Returns:
-        Dict[str, Union[str, List[str]]]: Dictionary containing metadata
+        Dict[str, Union[str, List[str], int, float, bool]]: Dictionary containing metadata
             
     Raises:
         FileNotFoundError: If the file does not exist

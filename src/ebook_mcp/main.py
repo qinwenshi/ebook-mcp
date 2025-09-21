@@ -150,14 +150,14 @@ def get_all_pdf_files(path: str) -> List[str]:
 
 @mcp.tool()
 @handle_mcp_errors
-def get_pdf_metadata(pdf_path: str) -> Dict[str, Union[str, List[str]]]:
+def get_pdf_metadata(pdf_path: str) -> Dict[str, Union[str, List[str], int, float, bool]]:
     """Get metadata of a given PDF file.
 
     Args:
         pdf_path: Full path to the PDF file.eg. "/Users/macbook/Downloads/test.pdf"
     
     Returns:
-        Dict[str, Union[str, List[str]]]: Dictionary containing metadata
+        Dict[str, Union[str, List[str], int, float, bool]]: Dictionary containing metadata
 
     Raises:
         FileNotFoundError: Raises when the PDF file not found
